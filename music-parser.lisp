@@ -1,6 +1,7 @@
 ;;;
 ;;; Several of these functions are very flaky WRT EOF, and that should
-;;; eventually be fixed.  This is all just a quick hack.
+;;; eventually be fixed.  This is all just a quick hack.  Most of this
+;;; could be converted to a very data-driven style of programming.
 ;;;
 ;;; Other things that should be checked/fixed:
 ;;;     - durations should get tweaked (say, by parse-music-section) if
@@ -11,7 +12,7 @@
 ;;;       set event on any channel where we get a duration-dependant
 ;;;       event before any tempo is set.
 ;;;
-;;; (an abashed) Julian Squires <tek@wiw.org> / 2003
+;;; (an abashed) Julian Squires <tek@wiw.org> / 2004
 ;;;
 
 (in-package :mumble)
@@ -25,8 +26,10 @@
 
 (defconstant +octave-size+ 12)
 
+(defparameter *staccato-base-division* 1/8)
 (defparameter *default-duration* (make-duration 4))
 (defparameter *default-octave* 4)
+(defparameter *default-staccato* 1)
 (defparameter *default-tempo* 120)
 
 
@@ -59,6 +62,19 @@
   (let ((cmd (make-instance 'music-command)))
     (setf (slot-value cmd 'type) :tempo)
     (setf (slot-value cmd 'value) tempo)
+    cmd))
+
+(defun make-staccato-command (staccato)
+  (let ((cmd (make-instance 'music-command)))
+    (setf (slot-value cmd 'type) :staccato)
+    (setf (slot-value cmd 'value) staccato)
+    cmd))
+
+;; This might become a special macro-command later.
+(defun make-arpeggio-command (n)
+  (let ((cmd (make-instance 'music-command)))
+    (setf (slot-value cmd 'type) :arpeggio)
+    (setf (slot-value cmd 'value) n)
     cmd))
 
 
@@ -95,6 +111,7 @@ the current channel tempo."))
   (let ((channel (make-instance 'channel)))
     (setf (channel-octave channel) *default-octave*)
     (setf (channel-tempo channel) *default-tempo*)
+    (setf (channel-staccato channel) *default-staccato*)
     (setf (channel-default-duration channel) *default-duration*)
     (setf (channel-data-stream channel) nil)
     channel))
@@ -268,7 +285,41 @@ Highly intolerant of malformed inputs."
 	  ((char= next-char #\#)
 	   (return))
 
+	  ;; Staccato.
+	  ((char= next-char #\q)
+	   (assert current-channels)
+	   (read-char stream)
+	   (let ((staccato (* *staccato-base-division* (expect-int stream))))
+	     (dolist (c current-channels)
+	       (push (make-staccato-command staccato)
+		     (channel-data-stream c))
+	       (setf (channel-staccato c) staccato))))
+
+	  ;; Macro invocation.
+	  ((char= next-char #\@)
+	   (assert current-channels)
+	   (parse-macro-invocation stream current-channels))
+
+	  ;; Comment.
+	  ((char= next-char #\;)
+	   (read-line stream))
+
 	  ;; Something else?
 	  (t (format nil "~&Ignored character: ~A"
 		     (read-char stream))))
     (eat-whitespace-and-barlines stream)))
+
+
+(defun parse-macro-invocation (stream channels)
+  (read-char stream)
+  (let ((next-char (peek-char nil stream)))
+           ;; Arpeggio.
+    (cond ((char= next-char #\a)
+	   (read-char stream)
+	   (let ((arp-num (expect-int stream)))
+	     (dolist (c channels)
+	       (push (make-arpeggio-command arp-num)
+		     (channel-data-stream c)))))
+	  ;; Something else?
+	  (t (format nil "~&Ignored macro invocator: @~A"
+		     (read-char stream))))))
