@@ -1,0 +1,11 @@
+
+CAVEATS
+
+Dots in durations must follow an integer duration value.  (You can't
+write, for example, "a4 b. c8")
+
+
+IDEAS
+
+Tempo macros, for defining rallentendos, accellerandos, fermatas, et
+cetera.
