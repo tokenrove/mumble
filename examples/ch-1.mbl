@@ -22,20 +22,21 @@ maker "Julian Squires <tek@wiw.org>"
 
 ;;; Generic lead vibratos
 ; Retsyn vibratos
-@~1 = { delay 12 speed 3 depth 5 }
-@~2 = { delay 22 speed 2 depth 4 }
+@~1 = { delay 12 speed 2 depth 3 }
+@~2 = { delay 8 speed 2 depth 4 }
 ; mild vibrato
-@~3 = { delay 32 speed 2 depth 2 }
+@~3 = { delay 32 speed 2 depth 3 }
 
 
 #MUSIC
 
+
 ;;;; (G) Intro
 
 ABC t120
-A o3 q6 %2 v8
-B o2 q6 %2 v6
-C o1 q4
+A o3 q6 %2 v14 @~2
+B o2 q6 %2 v13
+C o1 q4 v13 %eu
 
 A r1  c2 <a-2  g4 g4 d4 g4  f2 a-4 b-4>
 B c2. r4  f2. r4  <b-2. r4  >d2. r4
@@ -48,8 +49,8 @@ C r1  r1  q7 g1  f1
 ;;;; (A) Midpart in C minor
 
 ABC t120
-A o3 q6 %2 v8
-B o2 q6 %2 v6
+A o3 q6 %2 v14
+B o2 q6 %2 v13
 C o1 q4
 
 AB @~0
@@ -73,8 +74,8 @@ C a-4 f8>f< g4 b4
 ;;;; (B) Bridge
 
 ABC t120
-A o3 q6 %2 v4
-B o2 q6 %2 v3
+A o3 q6 %2 v12
+B o2 q6 %2 v10
 C o1 q4
 
 AB @~2
@@ -114,8 +115,8 @@ C g2 >c2
 ;;;; (F) [modified]
 
 ABC t120
-A o3 q6 %2 v4
-B o3 q6 %2 v6
+A o3 q6 %2 v10
+B o3 q6 %2 v13
 C o1 q4
 
 AB @~0
@@ -139,8 +140,8 @@ C g4 f4 e-4
 ;;;; (D) lamenting solo in C minor
 
 ABC t120
-A o3 q7 %2 v9
-B o2 q6 %2 v5
+A o3 q7 %2 v12
+B o2 q6 %2 v10
 C o1 q4
 
 A @~1
@@ -159,8 +160,8 @@ C q7 >c4 c4 c4<b-4 a-4 a-4 a-4 a-4 g4 g4 g4f8e- d4 d4 d2
 ;;;; (E) solo part 2, Eb major
 
 ABC t120
-A o3 q7 %2 v9
-B o2 q6 %2 v5
+A o3 q7 %2 v13
+B o2 q6 %2 v10
 C o1 q7
 
 A @~1
@@ -188,8 +189,8 @@ C >c1
 ;;;; (B/H) Bridge
 
 ABC t120
-A o3 q6 %2 v4
-B o2 q6 %2 v3
+A o3 q6 %2 v12
+B o2 q6 %2 v10
 C o1 q4
 
 AB @~2
@@ -229,8 +230,8 @@ C g2 >c2
 ;;;; (A) Midpart in C minor repeat
 
 ABC t120
-A o3 q6 @2 v8
-B o2 q6 @2 v6
+A o3 q6 @2 v14
+B o2 q6 @2 v13
 C o1 q4
 
 AB @~0
@@ -254,8 +255,8 @@ C a-4 f8>f< g4 b4
 ;;;; (F)
 
 ABC t120
-A o3 q6 @2 v4
-B o3 q6 @2 v6
+A o3 q6 @2 v12
+B o3 q6 @2 v10
 C o1 q4
 
 AB @~0
@@ -279,8 +280,8 @@ C g2
 ;;;; (C)
 
 ABC t120
-A o2 q3 @2 v7
-B o2 q3 @0 v6
+A o2 q3 @2 v13
+B o2 q3 @0 v11
 C o1 q4
 
 AB @~0
@@ -296,9 +297,9 @@ C g4 >d8<b- cc>c<c  d4 a8f ccac  <f4>f8d <gg>db
 ;;;; (B) Bridge again
 
 ABC t120
-;A o3 q6 @2 l8 v4
-;B o2 q6 @2 l8 v3
-C o1 q4 l8
+;A o3 q6 @2 v12
+;B o2 q6 @2 v10
+C o1 q4
 
 AB @~2
 
@@ -337,8 +338,8 @@ C g2 >c2
 ;;;; (I) Final cadence.
 
 ABC t120
-A o3 q6 @2 v7
-B o2 q6 @2 v6
+A o3 q6 @2 v14
+B o2 q6 @2 v13
 C o1 q4
 
 AB @~1

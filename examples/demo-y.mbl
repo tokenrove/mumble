@@ -22,6 +22,9 @@ copyright "Julian Squires / 2004"
 @a8 = { 0 | 4 3 -7 }
 @a9 = { 0 | 4 8 -12 }
 
+;; Rob Hubbard vibrato, or so.
+@~1 = { delay 8 speed 2 depth 3 }
+
 ;; This looks hideous -- it's just a test.
 @v1 = { 15 15 14 14 13 13 12 12 11 11 10 10 9 9 8 8
         7 7 7 7 6 6 6 6 6 | 7 }
@@ -33,7 +36,7 @@ copyright "Julian Squires / 2004"
 ;;;; D minor.
 
 ABC t140
-A q6 v8 %eu
+A q6 v12 @v1 %eu
 B q8 v10 @v2
 
 A o1     d1            | f1                |
@@ -45,8 +48,8 @@ B [f8f16f]3 f8f | @a1 e8e16ee8e @a2 ee16ee8e |
 C r | r |
 
 ABC !loop
-A o2
-C v11 q8
+A o1
+C v13 q8 @~1
 
 A     d4 d d d8>d<  | f4 f f f8e        |
 B @a1 [d8d16d]3 d8d | @a2 [c8c16c]3 c8c |
@@ -78,9 +81,9 @@ C c2 e4 a                    | b-2 a4 >c+                           |
 
 ;;;; A minor.
 
-A q6 v10
+A q6
 B @a0 q8
-C q8 @v2
+C q8 v13 @v2
 A o1 a4 a a a8>a   | c4 c c c8<b   |
 B o3 [a8a16a]3 a8a | [g8g16g]3 g8g |
 C o4 a8>cec a4 g   | >c4 <b8a g4 e |

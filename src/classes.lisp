@@ -45,6 +45,13 @@
     (setf (slot-value cmd 'value) n)
     cmd))
 
+;; This might become a special macro-command later.
+(defun make-vibrato-command (n)
+  (let ((cmd (make-instance 'music-command)))
+    (setf (slot-value cmd 'type) :vibrato)
+    (setf (slot-value cmd 'value) n)
+    cmd))
+
 
 (defclass note (music-command)
   ((tone :reader note-tone)

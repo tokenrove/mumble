@@ -422,6 +422,7 @@ Highly intolerant of malformed inputs."
     (eat-whitespace stream *ws-and-barline-characters*)))
 
 
+;;; XXX: should use *macro-table-mapping*
 (defun parse-macro-invocation (stream channels)
   (read-char stream)
   (let ((next-char (peek-char nil stream)))
@@ -444,8 +445,9 @@ Highly intolerant of malformed inputs."
 	  ((char= next-char #\~)
 	   (read-char stream)
 	   (let ((vibrato-num (expect-int stream)))
-	     ;; XXX unimplemented
-	     vibrato-num))
+	     (dolist (c channels)
+	       (vector-push-extend (make-vibrato-command vibrato-num)
+				   (channel-data-stream c)))))
 
 	  ;; Something else?
 	  (t (format t "~&Ignored macro invocator: @~A (~:*~S)"

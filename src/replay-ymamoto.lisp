@@ -138,6 +138,10 @@ multiple loops."
        (format stream "~&~8TDC.W $~X"
 	       (logior (ash #b11000100 8) (music-command-value note)))
        (incf *total-bytes* 2))
+      (:vibrato
+       (format stream "~&~8TDC.W $~X"
+	       (logior (ash #b11001011 8) (music-command-value note)))
+       (incf *total-bytes* 2))
       (:envelope-follow
        (format stream "~&~8TDC.W $~X"
 	       (logior (ash #b11001000 8)
@@ -159,9 +163,10 @@ multiple loops."
 
 	ORG 0
 song_header:
-        DC.W arpeggio_table>>2  ; pointer to arpeggio table
-        DC.W venv_table>>2      ; pointer to volume envelope table
-	DC.B 1,0		; number of tracks, pad"))
+        DC.W arpeggio_table>>2
+        DC.W venv_table>>2
+        DC.W vibrato_table>>2
+	DC.B 0,1		; pad, number of tracks"))
 
 
 (defun ymamoto-output-length-loop-list-table (stream name table)
@@ -172,6 +177,23 @@ song_header:
       ((>= i (length table)))
     (multiple-value-bind (list loop) (find-and-remove-loop (aref table i))
       (format stream "~&~8TDC.B ~A, ~A~{, ~D~}" (length list) loop list))))
+
+(defun ymamoto-output-vibrato-table (stream table)
+  ;; note that the zeroth element of the table is skipped.
+  (format stream "~&~8TALIGN 4~&vibrato_table:~%~8TDC.B ~D"
+	  (max 0 (1- (length table))))
+  (do ((i 1 (1+ i)))
+      ((>= i (length table)))
+    (flet ((get-field (list field)
+	     (nth (1+ (or (position field list)
+			  (error "Vibrato ~A lacks ~A!" i field))) list)))
+      (let* ((list (aref table i))
+	     (delay (get-field list 'DELAY))
+	     (depth (get-field list 'DEPTH))
+	     (speed (get-field list 'SPEED)))
+	(format stream "~&~8TDC.B 3, ~D, ~D, ~D, ~D" delay depth
+		(- 5 speed) (ash 1 (- 5 speed)))))))
+
 
 
 ;;;; HIGH-LEVEL
@@ -189,6 +211,7 @@ song_header:
      stream "arpeggio_table" (tune-get-table tune :arpeggio))
     (ymamoto-output-length-loop-list-table
      stream "venv_table" (tune-get-table tune :volume-envelope))
+    (ymamoto-output-vibrato-table stream (tune-get-table tune :vibrato))
     ;; for n tracks
     (let ((track-num 1))
       ;; I bet the following could all be reduced to one big format
