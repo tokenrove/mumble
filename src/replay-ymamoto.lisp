@@ -25,6 +25,12 @@ multiple loops."
        (values (remove :loop list) it)
        (values list 0)))
 
+(defun make-env-follow-command (options)
+  (let ((cmd (make-instance 'music-command)))
+    (setf (slot-value cmd 'type) :envelope-follow)
+    (setf (slot-value cmd 'value) options)
+    cmd))
+
 
 ;;;; INPUT-RELATED FUNCTIONS
 
@@ -36,13 +42,29 @@ multiple loops."
 
 
 (defun ymamoto-special-handler (stream channels)
-  (read-char stream)
-  (let ((next-char (read-char stream)))
-    (cond ((char= next-char #\e)
+  (let ((special-char (read-char stream)))
+    (cond ((char= special-char #\e)
 	   ;; env follow
-	   (format t "~&guilty env follow"))
+	   (let ((next-char (peek-char nil stream)))
+	     (cond ((char= next-char #\o)
+		    (read-char stream)
+		    (dolist (c channels)
+		      (vector-push-extend (make-env-follow-command :octave)
+					  (channel-data-stream c))))
+		   ((char= next-char #\u)
+		    (read-char stream)
+		    (dolist (c channels)
+		      (vector-push-extend (make-env-follow-command :unison)
+					  (channel-data-stream c))))
+		   ((char= next-char #\0)
+		    (read-char stream)
+		    (dolist (c channels)
+		      (vector-push-extend (make-env-follow-command :disable)
+					  (channel-data-stream c))))
+		   (t (format t "~&Ignored bad env-follow: %e~A"
+			      next-char)))))
 	  ;; Something else?
-	  (t (format t "~&Ignored special invocator: @~A" next-char)))))
+	  (t (format t "~&Ignored special invocator: %~A" special-char)))))
 
 
 ;;;; OUTPUT FUNCTIONS
@@ -111,7 +133,20 @@ multiple loops."
        (setf (channel-volume channel) (music-command-value note))
        (format stream "~&~8TDC.W $~X"
 	       (logior (ash #b11000011 8) (music-command-value note)))
-       (incf *total-bytes* 2)))
+       (incf *total-bytes* 2))
+      (:volume-envelope
+       (format stream "~&~8TDC.W $~X"
+	       (logior (ash #b11000100 8) (music-command-value note)))
+       (incf *total-bytes* 2))
+      (:envelope-follow
+       (format stream "~&~8TDC.W $~X"
+	       (logior (ash #b11001000 8)
+		       (ecase (music-command-value note)
+			 (:disable 0)
+			 (:unison 1)
+			 (:octave #b11)))))
+      (t (format t "~&WARNING: YMamoto ignoring ~A."
+		 (music-command-type note))))
     (when (and (channel-loop-point channel)
 	       (= (channel-loop-point channel)
 		  channel-pos))

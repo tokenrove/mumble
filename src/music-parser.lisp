@@ -237,6 +237,7 @@
 
 
 (defun parse-macro-section (stream tune)
+  (eat-whitespace stream)
   (do ((next-char #1=(peek-char nil stream) #1#))
       (nil)
     (cond ((char= next-char #\@)
@@ -285,6 +286,7 @@
   "Reads a music section from stream; returns at EOF or if a section
 change is detected.  Writes data and property changes to channels.
 Highly intolerant of malformed inputs."
+  (eat-whitespace stream)
   (do ((current-channels (and in-loop-p loop-channels))
        (next-char #1=(peek-char nil stream) #1#))
       (nil)
@@ -408,7 +410,7 @@ Highly intolerant of malformed inputs."
 	   (assert current-channels () "Command outside channels.")
 	   (read-char stream)
 	   (replay-special-handler (tune-replay tune) stream
-				   (tune-channels tune)))
+				   current-channels))
 
 	  ;; Comment.
 	  ((char= next-char #\;)
