@@ -122,36 +122,38 @@ song_header:
 
 ;;;; HIGH-LEVEL
 
-(defun mbl-to-ymamoto-file (mbl-file out-file)
-  (let (tune)
-    (with-open-file (stream mbl-file)
-      (setf tune (parse-mumble-file stream)))
-    (with-open-file (stream out-file
-		     :direction :output
-		     :if-exists :supersede)
-      ;; simple header
-      (output-ymamoto-header stream)
-      ;; for n tracks
-      (let ((track-num 1))
-	(format stream "~&~8TDC.L track_~D" track-num))
-      (ymamoto-output-length-loop-list-table
-       stream "arpeggio_table" (tune-get-table tune :arpeggio))
-      (ymamoto-output-length-loop-list-table
-       stream "venv_table" (tune-get-table tune :volume-envelope))
-      ;; for n tracks
-      (let ((track-num 1))
-	;; I bet the following could all be reduced to one big format
-	;; statement.  Yuck.
-	(format stream "~&track_~D:" track-num)
-	(do ((c (tune-channels tune) (cdr c))
-	     (ctr (char-code #\a) (1+ ctr)))
-	    ((null c))
-	  (format stream "~&~8TDC.L channel_~A" (code-char ctr)))
-	(do ((c (tune-channels tune) (cdr c))
-	     (ctr (char-code #\a) (1+ ctr)))
-	    ((null c))
-	  (format stream "~&channel_~A:" (code-char ctr))
-	  (ymamoto-output-note-stream (channel-data-stream (car c)) stream)
-	  (if (channel-loop-point (car c))
-	      (format stream "~&~8TDC.W $8001")
-	      (format stream "~&~8TDC.W $8000")))))))
+(defun ymamoto-output-asm (tune out-file)
+  (with-open-file (stream out-file
+		   :direction :output
+		   :if-exists :supersede)
+    ;; simple header
+    (output-ymamoto-header stream)
+    ;; for n tracks
+    (let ((track-num 1))
+      (format stream "~&~8TDC.L track_~D" track-num))
+    (ymamoto-output-length-loop-list-table
+     stream "arpeggio_table" (tune-get-table tune :arpeggio))
+    (ymamoto-output-length-loop-list-table
+     stream "venv_table" (tune-get-table tune :volume-envelope))
+    ;; for n tracks
+    (let ((track-num 1))
+      ;; I bet the following could all be reduced to one big format
+      ;; statement.  Yuck.
+      (format stream "~&track_~D:" track-num)
+      (do ((c (tune-channels tune) (cdr c))
+	   (ctr (char-code #\a) (1+ ctr)))
+	  ((null c))
+	(format stream "~&~8TDC.L channel_~A" (code-char ctr)))
+      (do ((c (tune-channels tune) (cdr c))
+	   (ctr (char-code #\a) (1+ ctr)))
+	  ((null c))
+	(format stream "~&channel_~A:" (code-char ctr))
+	(ymamoto-output-note-stream (channel-data-stream (car c)) stream)
+	(if (channel-loop-point (car c))
+	    (format stream "~&~8TDC.W $8001")
+	    (format stream "~&~8TDC.W $8000"))))))
+
+(register-replay "YMamoto"
+		 #'ymamoto-special-handler
+		 #'make-ymamoto-channels
+		 #'ymamoto-output-asm)

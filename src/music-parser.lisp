@@ -33,7 +33,6 @@
 (defparameter *default-staccato* 1)
 (defparameter *default-tempo* 120)
 
-
 ;;;; LOW-LEVEL PARSE/LEX ROUTINES.
 
 (defun digit-to-int (char)
@@ -183,7 +182,7 @@
 	    (COMMENT (parse-comment-section stream))
 	    (MACROS (parse-macro-section stream tune))
 	    (HEADER (parse-header-section stream tune))
-	    (MUSIC (parse-music-section stream (tune-channels tune)))))
+	    (MUSIC (parse-music-section stream tune))))
       (end-of-file () tune))))
 
 
@@ -203,9 +202,9 @@
 	(case header
 	  (REPLAY
 	   ;; XXX genericize replay stuff
-	   (assert (string= argument "YMamoto"))
-	   (setf (tune-channels tune) (make-ymamoto-channels))
-	   (setf (tune-replay tune) argument))
+	   (assert (set-tune-replay argument tune))
+	   (setf (tune-channels tune)
+		 (replay-create-channels (tune-replay tune))))
 	  ((TITLE COMPOSER COPYRIGHT)
 	   (push (list header argument) (tune-metadata tune))))))))
 
@@ -255,7 +254,7 @@
 
   
 
-(defun parse-music-section (stream channels
+(defun parse-music-section (stream tune
 			    &optional loop-channels in-loop-p)
   "Reads a music section from stream; returns at EOF or if a section
 change is detected.  Writes data and property changes to channels.
@@ -267,9 +266,9 @@ Highly intolerant of malformed inputs."
     (cond ((find next-char *channel-select-characters*)
 	   (setf current-channels nil)
 	   (dolist (c (expect-channels stream))
-	     (assert (< c (length channels))
+	     (assert (< c (length (tune-channels tune)))
 		     () "Invalid channel for this replay.")
-	     (push (nth c channels) current-channels)))
+	     (push (nth c (tune-channels tune)) current-channels)))
 
 	  ;; Repeats (unrolled loops).
 	  ((char= next-char #\[)
@@ -278,7 +277,7 @@ Highly intolerant of malformed inputs."
 	   (dolist (c current-channels)
 	     (push (channel-current-position c)
 		   (channel-repeats c)))
-	   (parse-music-section stream channels current-channels t))
+	   (parse-music-section stream tune current-channels t))
 
 	  ((char= next-char #\])
 	   (assert (and in-loop-p
@@ -377,8 +376,8 @@ Highly intolerant of malformed inputs."
 	  ((char= next-char #\%)
 	   (assert current-channels () "Command outside channels.")
 	   (read-char stream)
-	   ;; XXX genericize replay stuff
-	   (ymamoto-special-handler stream channels))
+	   (replay-special-handler (tune-replay tune) stream
+				   (tune-channels tune)))
 
 	  ;; Comment.
 	  ((char= next-char #\;)
