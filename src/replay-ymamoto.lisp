@@ -93,19 +93,25 @@ multiple loops."
 	*total-frames* 0
 	*total-bytes* 0)
   (do* ((note-> 0 (1+ note->))
-	(note (aref notes note->) (aref notes note->))
+	note
 	(channel-pos 0 (1+ channel-pos)))
        ((>= note-> (length notes)))
+    (setf note (aref notes note->))
     (case (music-command-type note)
       (:note (ymamoto-output-note note channel stream))
       (:arpeggio
        (format stream "~&~8TDC.W $~X"
-	       (logior (ash #b11000000 8) (music-command-value note)))
+	       (logior (ash #b11000001 8) (music-command-value note)))
        (incf *total-bytes* 2))
       (:tempo
        (setf (channel-tempo channel) (music-command-value note)))
       (:staccato
-       (setf (channel-staccato channel) (music-command-value note))))
+       (setf (channel-staccato channel) (music-command-value note)))
+      (:volume
+       (setf (channel-volume channel) (music-command-value note))
+       (format stream "~&~8TDC.W $~X"
+	       (logior (ash #b11000011 8) (music-command-value note)))
+       (incf *total-bytes* 2)))
     (when (and (channel-loop-point channel)
 	       (= (channel-loop-point channel)
 		  channel-pos))

@@ -25,6 +25,12 @@
     (setf (slot-value cmd 'value) staccato)
     cmd))
 
+(defun make-simple-volume-command (n)
+  (let ((cmd (make-instance 'music-command)))
+    (setf (slot-value cmd 'type) :volume)
+    (setf (slot-value cmd 'value) n)
+    cmd))
+
 ;; This might become a special macro-command later.
 (defun make-arpeggio-command (n)
   (let ((cmd (make-instance 'music-command)))
@@ -65,6 +71,7 @@ the current channel tempo."))
   ((octave :accessor channel-octave)
    (tempo :accessor channel-tempo)
    (staccato :accessor channel-staccato)
+   (volume :accessor channel-volume)
    (duration :accessor channel-default-duration)
    (loop-point :accessor channel-loop-point)
    ;; repeats is kind of an ugly kludge.
@@ -77,6 +84,7 @@ the current channel tempo."))
 	  (channel-tempo channel) *default-tempo*
 	  (channel-staccato channel) *default-staccato*
 	  (channel-default-duration channel) *default-duration*
+	  (channel-volume channel) 0
 	  (channel-loop-point channel) nil
 	  (channel-repeats channel) nil)
 

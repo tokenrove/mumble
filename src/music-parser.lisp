@@ -162,6 +162,32 @@
     (values (second mapping) index (funcall (third mapping) stream))))
 
 
+(defun handle-simple-volume (stream channels)
+  (assert (char= (read-char stream) #\v))
+  (let ((next-char (peek-char nil stream)))
+    (cond ((find next-char *duration-digits*)
+	   (let ((volume (expect-int stream)))
+	     (dolist (c channels)
+	       (vector-push-extend
+		(make-simple-volume-command volume)
+		(channel-data-stream c))
+	       (setf (channel-volume c) volume))))
+	  ((char= next-char #\+)
+	   (read-char stream)
+	   (dolist (c channels)
+	     (vector-push-extend
+	      (make-simple-volume-command (1+ (channel-volume c)))
+	      (channel-data-stream c))))
+	  ((char= next-char #\-)
+	   (read-char stream)
+	   (dolist (c channels)
+	     (vector-push-extend
+	      (make-simple-volume-command (1- (channel-volume c)))
+	      (channel-data-stream c))))
+	  (t (error "~&Bad volume character: v~A" next-char)))))
+
+
+
 ;;;; HIGH-LEVEL PARSE ROUTINES.
 
 ;;; We should really just create a readtable for the use of all the
@@ -311,6 +337,11 @@ Highly intolerant of malformed inputs."
 	   (dolist (c current-channels)
 	     (incf (channel-octave c))))
 
+	  ;; (Non-venv) volume changes.
+	  ((char= next-char #\v)
+	   (assert current-channels () "Command outside channels.")
+	   (handle-simple-volume stream current-channels))
+
 	  ;; Notes and rests.
 	  ((find next-char *note-characters*)
 	   (assert current-channels () "Command outside channels.")
@@ -427,6 +458,7 @@ Highly intolerant of malformed inputs."
 	 (dolist (c channels)
 	   (setf (channel-loop-point c) (channel-current-position c))))
       (END
+       (format t "~&I'm afraid !end is currently unsupported.")
        ;;; XXX how to handle this nicely?
        #+nil(dolist (c channels)
 	      (vector-push-extend (make-track-end-command)
