@@ -9,8 +9,11 @@
 (in-package :mumble)
 
 (defparameter *ymamoto-frequency* 50)
+;; XXX: A lot of these global variables will disappear soon; I'm just lazy.
 (defvar *channel-delta* 0)
 (defvar *total-frames* 0)
+(defvar *total-bytes* 0)
+(defvar *loop-point* nil)
 
 ;;;; UTILITIES
 
@@ -53,6 +56,7 @@ multiple loops."
 
     (when (plusp frames)
       (incf *total-frames* frames)
+      (incf *total-bytes* 2)
       (format stream (if comma ", $~X" "~&~8TDC.W $~X") note-word))))
 
 
@@ -82,23 +86,31 @@ multiple loops."
       (ymamoto-output-note-helper 127 staccato-frames stream t))))
 
 
-(defun ymamoto-output-note-stream (notes stream)
+(defun ymamoto-output-note-stream (notes channel stream)
   "Traverse a note-stream, keeping track of tempo and staccato
   settings, and output assembly directives for this note stream."
-  (let ((channel (make-channel)))
-    (setf *channel-delta* 0)
-    (setf *total-frames* 0)
-    (loop for note across notes
-       do (case (music-command-type note)
-	    (:note (ymamoto-note-output note channel stream))
-	    (:arpeggio
-	     (format stream "~&~8TDC.W $~X"
-		     (logior (ash #b11000000 8) (music-command-value note))))
-	    (:tempo
-	     (setf (channel-tempo channel) (music-command-value note)))
-	    (:staccato
-	     (setf (channel-staccato channel) (music-command-value note)))))
-    (format t "~&frames: ~A" *total-frames*)))
+  (setf *channel-delta* 0
+	*total-frames* 0
+	*total-bytes* 0)
+  (do* ((note-> 0 (1+ note->))
+	(note (aref notes note->) (aref notes note->))
+	(channel-pos 0 (1+ channel-pos)))
+       ((>= note-> (length notes)))
+    (case (music-command-type note)
+      (:note (ymamoto-output-note note channel stream))
+      (:arpeggio
+       (format stream "~&~8TDC.W $~X"
+	       (logior (ash #b11000000 8) (music-command-value note)))
+       (incf *total-bytes* 2))
+      (:tempo
+       (setf (channel-tempo channel) (music-command-value note)))
+      (:staccato
+       (setf (channel-staccato channel) (music-command-value note))))
+    (when (and (channel-loop-point channel)
+	       (= (channel-loop-point channel)
+		  channel-pos))
+      (setf *loop-point* *total-bytes*)))
+  (format t "~&frames: ~A, bytes: ~A" *total-frames* *total-bytes*))
 
 
 (defun output-ymamoto-header (stream)
@@ -106,14 +118,15 @@ multiple loops."
 
 	ORG 0
 song_header:
-        DC.L arpeggio_table     ; pointer to arpeggio table
-        DC.L venv_table         ; pointer to volume envelope table
-	DC.B 1			; number of tracks"))
+        DC.W arpeggio_table>>2  ; pointer to arpeggio table
+        DC.W venv_table>>2      ; pointer to volume envelope table
+	DC.B 1,0		; number of tracks, pad"))
 
 
 (defun ymamoto-output-length-loop-list-table (stream name table)
   ;; note that the zeroth element of the table is skipped.
-  (format stream "~&~A:~%~8TDC.B ~D" name (max 0 (1- (length table))))
+  (format stream "~&~8TALIGN 4~&~A:~%~8TDC.B ~D" name
+	  (max 0 (1- (length table))))
   (do ((i 1 (1+ i)))
       ((>= i (length table)))
     (multiple-value-bind (list loop) (find-and-remove-loop (aref table i))
@@ -130,7 +143,7 @@ song_header:
     (output-ymamoto-header stream)
     ;; for n tracks
     (let ((track-num 1))
-      (format stream "~&~8TDC.L track_~D" track-num))
+      (format stream "~&~8TDC.W track_~D>>2" track-num))
     (ymamoto-output-length-loop-list-table
      stream "arpeggio_table" (tune-get-table tune :arpeggio))
     (ymamoto-output-length-loop-list-table
@@ -139,18 +152,25 @@ song_header:
     (let ((track-num 1))
       ;; I bet the following could all be reduced to one big format
       ;; statement.  Yuck.
-      (format stream "~&track_~D:" track-num)
+      (format stream "~&~8TALIGN 4~&track_~D:" track-num)
       (do ((c (tune-channels tune) (cdr c))
 	   (ctr (char-code #\a) (1+ ctr)))
 	  ((null c))
-	(format stream "~&~8TDC.L channel_~A" (code-char ctr)))
+	(format stream "~&~8TDC.W channel_~A~A>>2"
+		track-num (code-char ctr)))
+
+      ;; output channels themselves.
       (do ((c (tune-channels tune) (cdr c))
 	   (ctr (char-code #\a) (1+ ctr)))
 	  ((null c))
-	(format stream "~&channel_~A:" (code-char ctr))
-	(ymamoto-output-note-stream (channel-data-stream (car c)) stream)
+	(format t "~&note ~A" (channel-loop-point (car c)))
+	(format stream "~&~8TALIGN 4~&channel_~A~A:"
+		track-num (code-char ctr))
+	(ymamoto-output-note-stream (channel-data-stream (car c))
+				    (car c)
+				    stream)
 	(if (channel-loop-point (car c))
-	    (format stream "~&~8TDC.W $8001")
+	    (format stream "~&~8TDC.W $8001, $~X" *loop-point*)
 	    (format stream "~&~8TDC.W $8000"))))))
 
 (register-replay "YMamoto"

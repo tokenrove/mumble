@@ -26,7 +26,7 @@ copyright "Julian Squires / 2004"
 
 ;;;; D minor.
 
-ABC t128
+ABC t140
 B q4
 
 A o2     d1            | f                 |
@@ -37,14 +37,13 @@ A b-            | a2 g2                      |
 B [f8f16f]3 f8f | @a1 e8e16ee8e @a2 ee16ee8e |
 C r | r |
 
-#COMMENT Drums should kick in here. #MUSIC
-
 ABC !loop
+C q8
 
 A q6 d4 d d d8>d<   | f4 f f f8e        |
 B @a1 [d8d16d]3 d8d | @a2 [c8c16c]3 c8c |
 C r | r |
-;D k8 h h h s h h h             | k8 h h h s h h h          |
+;D k8 h h h s h h h | k8 h h h s h h h |
 
 A b-4 b- b- b-8>f< | a4 a8>a< g4 g8>c+<         |
 B [f8f16f]3 f8f    | @a1 e8e16ee8e @a2 ee16ee8e |
@@ -72,7 +71,7 @@ C c2 e4 a                    | b-2 a4 >c+                           |
 ;;;; A minor.
 
 B @a0 q4
-C q2
+C q4
 A o1 a4 a a a8>a   | c4 c c c8<b   |
 B o3 [a8a16a]3 a8a | [g8g16g]3 g8g |
 C o4 a8>cec a4 g   | >c4 <b8a g4 e |
@@ -80,7 +79,6 @@ C o4 a8>cec a4 g   | >c4 <b8a g4 e |
 A >f4 f f f8>c<   | e4 e8>e< d4 d8g+   |
 B >[c8c16c]3 c8c< | b8b16bb8b bb16bb8b |
 C f2 a8>cea       | b2 g4 g+           |
-
 
 A <a4 a a a8>a    | c4 c c c8<b       |
 B [a8a16a]3 a8a   | [g8g16g]3 g8g     |

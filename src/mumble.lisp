@@ -4,8 +4,10 @@
   (defvar *replay-map* nil))
 
 (defun register-replay (name special-handler channel-creator output-fn)
-  (push (list name special-handler channel-creator output-fn)
-	*replay-map*))
+  (let ((replay (list name special-handler channel-creator output-fn)))
+    (aif (position name *replay-map* :test #'equal :key #'car)
+	 (setf (nth it *replay-map*) replay)
+	 (push replay *replay-map*))))
 
 (defun set-tune-replay (name tune)
   (dolist (replay *replay-map*)

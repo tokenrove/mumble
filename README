@@ -4,7 +4,7 @@ Julian Squires <tek@wiw.org> / 2004
 
 Mumble is a package for converting text representations of music into
 data for specific playroutines.  The format, described in this
-document, is a variant on the (popular?) Music Macro Language (or MML)
+document is a variant on the (popular?) Music Macro Language (or MML)
 format.
 
 I started writing this package so I could convert some of my older
@@ -37,6 +37,13 @@ UNSUPPORTED REPLAYS I'D LIKE TO SUPPORT
 * something on the atari 800XL
 
 
+USING MUMBLE FROM THE LISP REPL
+
+You should be able to just:
+> (asdf:oos 'asdf:load-op 'mumble)
+> (mumble:compile-mumble "my-file.mbl" "my-file.out-ext")
+and everything should work.
+
 
 INPUT FORMAT BASICS
 
@@ -63,8 +70,8 @@ parsing myself).
 @a => arpeggio.  Followed by digits indicating arpeggio number,
       or 0 for arpeggio off.
 @b => pitch macro (mnemonic: bend).
-@d => volume macro?  For scripting time signatures/repeated rhythmic
-      accents, etc.
+@d => volume macro? (mnemonic: dynamics).  For scripting time
+      signatures/repeated rhythmic accents, etc.
 @i => instrument.  An instrument is, broadly, a snapshot of partial
       channel state; what that means depends on the replay.
 @t => tempo macro?  For scripting rallentendos and accelerandos.

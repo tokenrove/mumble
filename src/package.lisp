@@ -1,3 +1,4 @@
 
 (defpackage :mumble
-  (:use :cl :anaphora))
+  (:use :cl :anaphora)
+  (:export #:compile-mumble))

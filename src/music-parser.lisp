@@ -170,6 +170,7 @@
 ;;; single/back quote, comma).
 (defun parse-mumble-file (stream)
   (let ((*read-eval* nil)
+	(*package* (find-package :mumble))
 	(tune (make-tune)))
     ;; Any preamble that occurs before the first section is ignored.
     (parse-comment-section stream)
@@ -218,7 +219,6 @@
 	     (assert (plusp index) ()
 		     "Bad index ~A (tables index from 1 -- 0 is the ~
                      \"effect off\" index)." index)
-	     (format t "~&got macro ~A ~A ~A" table index entry)
 	     (unless (tune-get-table tune table)
 	       (tune-add-table tune table))
 	     (tune-add-to-table tune table index entry)))
@@ -420,8 +420,9 @@ Highly intolerant of malformed inputs."
 
 
 (defun parse-bang-invocation (stream channels)
-  (let ((symbol (read stream)))
-    (case symbol
+  (assert (char= (read-char stream) #\!))
+  (let* ((symbol (read stream)))
+    (ecase symbol
       (LOOP
 	 (dolist (c channels)
 	   (setf (channel-loop-point c) (channel-current-position c))))
