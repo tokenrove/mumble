@@ -1,0 +1,93 @@
+
+Transcription of YM tune for Ngaire.
+Julian Squires <tek@wiw.org> / 2004
+
+#HEADER
+
+replay "YMamoto"
+title "Demo-y"
+composer "tokenrove"
+copyright "Julian Squires / 2004"
+
+#MACROS
+
+;; it's so great to arpeggiate.
+@a1 = { 0 | 3 9 -12 }
+@a2 = { 0 | 5 7 -12 }
+@a3 = { 0 | 3 4 -7 }
+@a4 = { 0 | 5 4 -9 }
+@a5 = { 0 | 5 3 -8 }
+@a6 = { 0 | 2 3 -5 }
+@a7 = { 0 | 6 3 -9 }
+@a8 = { 0 | 4 3 -7 }
+@a9 = { 0 | 4 8 -12 }
+
+#MUSIC
+
+;;;; D minor.
+
+ABC t128
+B q4
+
+A o2     d1            | f                 |
+B o4 @a1 [d8d16d]3 d8d | @a2 [c8c16c]3 c8c |
+C r1 | r |
+
+A b-            | a2 g2                      |
+B [f8f16f]3 f8f | @a1 e8e16ee8e @a2 ee16ee8e |
+C r | r |
+
+#COMMENT Drums should kick in here. #MUSIC
+
+ABC !loop
+
+A q6 d4 d d d8>d<   | f4 f f f8e        |
+B @a1 [d8d16d]3 d8d | @a2 [c8c16c]3 c8c |
+C r | r |
+;D k8 h h h s h h h             | k8 h h h s h h h          |
+
+A b-4 b- b- b-8>f< | a4 a8>a< g4 g8>c+<         |
+B [f8f16f]3 f8f    | @a1 e8e16ee8e @a2 ee16ee8e |
+C r | r |
+;D k8 h h h s h h  h     | k8 h16hh8h s h16hhsh8     |
+
+
+A d4 d d d8>d<      | f4 f f f8e        |
+B @a1 [d8d16d]3 d8d | @a2 [c8c16c]3 c8c |
+C o5 d2. f4         | a2 g8 f e c+              |
+
+A b-4 b- b- b-8>f< | a4 a8>a< g4 g8>c+<         |
+B [f8f16f]3 f8f    | @a1 e8e16ee8e @a2 ee16ee8e |
+C <b-2> d4 f       | g2 a4 c+                   |
+
+
+A d4 d d d8>d<         | f4 f f f8e        |
+B o4 @a3 [d8d16d]3 d8d | @a4 [c8c16c]3 c8c |
+C o5 d2. f4            | a2 g8 f d e       |
+
+A a4 a a a8b-                | g4 g8>e< a4 a8g+                     | 
+B @a5 e8e16ee8e @a6 gg16gg8g | @a7 b-8b-16b-b-8b- @a8 aa16a @a9 a8a |
+C c2 e4 a                    | b-2 a4 >c+                           |
+
+;;;; A minor.
+
+B @a0 q4
+C q2
+A o1 a4 a a a8>a   | c4 c c c8<b   |
+B o3 [a8a16a]3 a8a | [g8g16g]3 g8g |
+C o4 a8>cec a4 g   | >c4 <b8a g4 e |
+
+A >f4 f f f8>c<   | e4 e8>e< d4 d8g+   |
+B >[c8c16c]3 c8c< | b8b16bb8b bb16bb8b |
+C f2 a8>cea       | b2 g4 g+           |
+
+
+A <a4 a a a8>a    | c4 c c c8<b       |
+B [a8a16a]3 a8a   | [g8g16g]3 g8g     |
+C a16gecagec>c4<a | e8.g16ab>c8 e4 <g |
+
+A >f4 f f f8>c<        | e4 e8>e< d4 d8g+   |
+B >[c8c16c]3 c8c<      | b8b16bb8b bb16bb8b |
+C >c16<afe>c<afe c8eae | b2 g8>e<g+>e<      |
+
+;; end of data.

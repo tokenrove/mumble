@@ -1,11 +1,140 @@
+mumble
+Julian Squires <tek@wiw.org> / 2004
+
+
+Mumble is a package for converting text representations of music into
+data for specific playroutines.  The format, described in this
+document, is a variant on the (popular?) Music Macro Language (or MML)
+format.
+
+I started writing this package so I could convert some of my older
+songs (written in MML, for the NES) to a new Atari ST playroutine I
+was writing.  Along the way, I realized that this was my opportunity
+to make some changes to the input format, and start using a single
+source for output for various playroutine targets.
+
+This format may not be ideal for formats with more than about eight
+channels, but I rarely work with more than five, anyway.
+
+
+PLAYROUTINES (REPLAYS) SUPPORTED
+
+* YMamoto -- my primitive Atari ST YM-2149 playroutine.
+
+REPLAYS I PLAN TO WRITE MYSELF AND SUPPORT
+
+* nes (soon)
+* some kind of opl[23] playroutine.
+* a SID replay.
+* some snes spc replay
+
+UNSUPPORTED REPLAYS I'D LIKE TO SUPPORT
+
+* hubbard -- Rob Hubbard's "Monty on the Run" playroutine.
+* mod -- Protracker-style 4-channel MODs. (no specific replay)
+* ahx, fc
+* mck
+* something on the atari 800XL
+
+
+
+INPUT FORMAT BASICS
+
+I'll just describe significant differences from MML here, for the
+moment.  (See various documents on the MML format available in the NES
+scene.)  All of this syntax might change at any time.  (Sorry.)
+
+The biggest obvious change is that the "l" command is gone, and now
+note duration is relative to the previous note duration input for the
+channel in question.  Lilypond has this behavior, and I find it pretty
+nice (also, it should make it easier for me to typeset the music in my
+chiptunes).  Unfortunately it's probably the most annoying thing about
+converting old MML files over to mumble.  I will probably add a
+compatibility flag once I get sufficiently annoyed.
+
+You can put "|" in the input and it will be ignored; I find it makes
+things a lot cleaner, as I can keep track of my barlines in the input.
+
+Generic macro dispatch is done with the "@" prefix, more in the style
+of CL's "#" macro dispatch (partially because I've had some thoughts
+of changing things to use CL readtables instead of doing all the
+parsing myself).
+
+@a => arpeggio.  Followed by digits indicating arpeggio number,
+      or 0 for arpeggio off.
+@b => pitch macro (mnemonic: bend).
+@d => volume macro?  For scripting time signatures/repeated rhythmic
+      accents, etc.
+@i => instrument.  An instrument is, broadly, a snapshot of partial
+      channel state; what that means depends on the replay.
+@t => tempo macro?  For scripting rallentendos and accelerandos.
+@v => (software) volume envelope.
+@~ => vibrato.
+
+
+Playroutine-specific commands are done with the "%" prefix, which
+means that the old MML use of "%" to specify an absolute number of
+ticks for a note is no longer supported.
+
+For example, I'll show a few "%" commands from my YM playroutine
+support, and from my NES playroutine support.
+
+YM:
+
+%e[uo4] => set hardware envelope to follow current notes at {unison,
+	   octave, 4th below}.
+... envelope sweep, noise carrier, AM sample playback
+
+NES:
+
+... timbre switching; channel A hardware sweep; looped noise...
+
+SID:
+
+... timbre switching/PWM; filter control; hard reset control...
+
+The general idea is that one should be able to write a tune, and adapt
+it to various platforms primarily by changing the "%" commands; "@"
+commands should be basically common to all replays.  (I'm also going
+to think more about this and possibly support some kind of conditional
+compilation or option to ignore certain commands when using a certain
+replay.)
+
+Some playroutines require use of instruments for most effects, while
+others don't use instruments at all.  Playroutine outputs that don't
+use instruments should silently translate instrument use to
+appropriate commands.
+
+The old data skip command, "!", has become a dispatch for general
+structural commands:
+
+!loop => song loop (formerly "L").
+!end => end of track (kind of like the old "!").
+
+
 
 CAVEATS
 
 Dots in durations must follow an integer duration value.  (You can't
 write, for example, "a4 b. c8")
 
+Repeats ("[abcabc]42") are always unfolded during parsing, to keep
+basic output routines simpler.  It's my belief that the output routine
+code can do its own repeat optimization if it wants to, and it can do
+it better than a human.  Repeats should be inserted to keep the
+original clean and readable.
+
 
 IDEAS
 
 Tempo macros, for defining rallentendos, accellerandos, fermatas, et
 cetera.
+
+Large-scale volume macros, to define time signatures, et cetera.
+
+The playroutine output code is responsible for complaining to the user
+if a feature is not supported (for example, using vibrato outside of
+an instrument definition; or defining more than 32 instruments); but
+the events that trigger these complaints should have original file
+information with them so that line and ideally character positions can
+be reported back to the user.

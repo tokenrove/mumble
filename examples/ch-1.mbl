@@ -1,0 +1,366 @@
+
+Adapted for YM from the original MML for NES, as a replay test.  I
+might convert this to some other system as an example once other
+replays are supported.
+
+Original was written at Chip Weekend 1, July 2004.
+
+#HEADER
+
+replay "YMamoto"
+title "sight for sore thumbs"
+composer "tokenrove"
+maker "Julian Squires <tek@wiw.org>"
+
+#MACROS
+
+;;;; INSTRUMENTS
+
+;; Violin?  (a little rough)
+@v1 = { 0 1 2 3 4 5 7 7 7 6 6 6 6 5 5 5 5 4 4 4 3 }
+;%t0 =  { 2 2 2 2 2 3 3 }
+
+;;; Generic lead vibratos
+; Retsyn vibratos
+@~1 = { delay 12 speed 3 depth 5 }
+@~2 = { delay 22 speed 2 depth 4 }
+; mild vibrato
+@~3 = { delay 32 speed 2 depth 2 }
+
+
+#MUSIC
+
+;;;; (G) Intro
+
+ABC t120
+A o3 q6 %2 v8
+B o2 q6 %2 v6
+C o1 q4
+
+A r1  c2 <a-2  g4 g4 d4 g4  f2 a-4 b-4>
+B c2. r4  f2. r4  <b-2. r4  >d2. r4
+C r1 r1 r1 r1
+
+A c2 c4 <a-4  b-4.>c8 d2  d4 c8d c2  f4.d8 g4 d4
+B e-2 f2  g2 f4 a-4  b-2 e-8rg a-8^2 b-8gfd
+C r1  r1  q7 g1  f1
+
+;;;; (A) Midpart in C minor
+
+ABC t120
+A o3 q6 %2 v8
+B o2 q6 %2 v6
+C o1 q4
+
+AB @~0
+
+A c4 <b-8>c c4 <a-4  b-2 >d4 <f4  >c4.r8 <a-r>cd
+B c8e-ga- f2  <b-8>dfa- d2  c8c<a->c ffa-f
+C c4 >c8<a- <ff>f<f  g4 >g8e- dd>d<d crgf <ff>f<f
+
+A e-4 d8e- d4 <b4  >
+B c8fa-b g2       >
+C a-4 f8>f< g4 b4 >
+
+A c4 <b-8>c c4 <a-4  b-2 >d4 <f4  >c4.r8 <a-r>cd
+B c8e-ga- f2  <b-8>dfa- d2  c8c<a->c ffa-f
+C c4 >c8<a- <ff>f<f  g4 >g8e- dd>d<d crgf <ff>f<f
+
+A e-4 d8e- d4 <b4
+B c8fa-b   g2
+C a-4 f8>f< g4 b4
+
+;;;; (B) Bridge
+
+ABC t120
+A o3 q6 %2 v4
+B o2 q6 %2 v3
+C o1 q4
+
+AB @~2
+
+A g1
+B e-1
+C c2 q2 c4 c4
+
+A a1
+B f1
+C d4 d4 d4 d4
+
+A d2 f2
+B g2 d2
+C <b-4 b-4 q6 b4 b4
+
+A >c1
+B g1
+C >c1
+
+A <e-1
+B c1
+C q2 c4 c4 q6 c8>c< q2 c4
+
+A f1
+B d1
+C d4 d4 q6 d8>d< q2 d4
+
+A d2 f4 f+4
+B g8ge-g bgd<b
+C q6 <b-4 b-8>f <b4 b8>f+
+
+A >c1
+B c1
+C g2 >c2
+
+;;;; (F) [modified]
+
+ABC t120
+A o3 q6 %2 v4
+B o3 q6 %2 v6
+C o1 q4
+
+AB @~0
+
+A [r1]2 >c4. <b4.> d8e-  f4. f8r fgf
+B @1 q4 [g8e-c gd<b >fr  a-fd a-fc <br>]2
+C >[c4. <g4. f8>f  d4. f4. g4]2
+
+A e-4.r8 de-f4  g4.a-8 g<b->de-
+B g8e-c gd<b >fr  ge-<b-> e-c<a-> de-
+C c4. g4. f8>f e-4. a-4. g4
+
+A v+ c4.e-8 d4.f8
+B g2 a-2
+C g8>c<e->c< a->d<f>d<
+
+A g4 f4 e-8d
+B g4 a-2
+C g4 f4 e-4
+
+;;;; (D) lamenting solo in C minor
+
+ABC t120
+A o3 q7 %2 v9
+B o2 q6 %2 v5
+C o1 q4
+
+A @~1
+
+A [c2. r8<g  a-2 >e-16dc8r <g8^2 b4. >d8^2 r2]2
+B r1  r1  b2 r2  a-4 g4 f4 e-4
+B c8e-gce-gce-  <a->ce-<a->ce-<a->c  <gb>d<gb>d<gb>  <dgbdgbdg>
+; XXX maybe just drums over this first part, no bass?
+C [q7 >c2.<b-4 a-1 g2.f8e- d1]2
+
+AB v+
+A c2. r8<g a-16b->cd<a>cde-< >e-16dc8r <ga-b>cd <b4. >d8 f12e-d fe-d e-4.d8
+B c8e-gce-gce-  <a->ce-<a->ce-<a->c  <gb>d<gb>d<gb>  <dgbdgbdg>
+C q7 >c4 c4 c4<b-4 a-4 a-4 a-4 a-4 g4 g4 g4f8e- d4 d4 d2
+
+;;;; (E) solo part 2, Eb major
+
+ABC t120
+A o3 q7 %2 v9
+B o2 q6 %2 v5
+C o1 q7
+
+A @~1
+
+A g4 f8g g4 e-4  d4 c8d <b-a-gf  e-2 >c16d16e-8r <b-8^2 r2>
+B b-1 r1 r1 >d4 f4 d4 <b-4>
+C e-1  d2 g8b-gb-  a-1  b-1
+
+A c4 f8g f4 e-4  g8gdg8^2  c2 e-8d16c16<b-8 b-8^2 r2>
+B r1  r2 <b-4 g4  r1  f4 >f8d< f4 d4>
+C e-4 e-4 e-4 e-4  d4 d4 <g8b-gb-  >c4 c4 e-8a-e-a-  d4 d4 f8b-fb-
+
+A <b-8b-gb-8^2  a-8gb->dgr fe-8^2 c8c<a->c  <b-4 >c16d16e-8df4.
+B r4 <e-4 g8ge-g  r1  r2 >e-8e-ce-8^4  <d8fb-<b->df
+C e-4 e-4 e-4 e-4  d4 d4 g8b->d<b-  a-4 a-4 a-4 a-4  b-4 b-4 b-4 b-4
+
+A @~0 <g4 f8g f4 e-4  d2 b-16>c16d8r <a-8^2 r2 b-4.a-8fgb>d
+B b-2.>c4  r1  c8c<a->c rc<b-a-  q8 >d4 r4 f4 r4
+C e-4 e-4 e-4 e-4  d4 d4 <b-8gdg  >c4 c4 e-8a->ce-  d4 d4 <b-8fgb
+
+A @~3 v- e-1
+B @~3 q7 g1
+C >c1
+
+;;;; (B/H) Bridge
+
+ABC t120
+A o3 q6 %2 v4
+B o2 q6 %2 v3
+C o1 q4
+
+AB @~2
+
+;A g1
+;B e-1
+;C c2 q2 c4 c4
+
+A f1
+B a1
+C d4 d4 d4 d4
+
+A g2 f2
+B g2 d2
+C <b-4 b-4 q6 b4 b4
+
+A >c1
+B g1
+C >c1
+
+A <e-1
+B c1
+C q2 c4 c4 q6 c8>c< q2 c4
+
+A f1
+B d1
+C d4 d4 q6 d8>d< q2 d4
+
+A d2 f4 g4
+B g8ge-g bgd<b
+C q6 <b-4 b-8>f <b4 b8>f+
+
+A >c1
+B c1
+C g2 >c2
+
+;;;; (A) Midpart in C minor repeat
+
+ABC t120
+A o3 q6 @2 v8
+B o2 q6 @2 v6
+C o1 q4
+
+AB @~0
+
+A c4 <b-8>c c4 <a-4  b-2 >d4 <f4  >c4.r8 <a-r>cd
+B c8e-ga- f2  <b-8>dfa- d2  c8c<a->c ffa-f
+C c4 >c8<a- <ff>f<f  g4 >g8e- dd>d<d crgf <ff>f<f
+
+A e-4 d8e- d4 <b4 >
+B c8fa-b g2       >
+C a-4 f8>f< g4 b4 >
+
+A c4 <b-8>c c4 <a-4  b-2 >d4 <f4  >c4.r8 <a-r>cd
+B c8e-ga- f2  <b-8>dfa- d2  c8c<a->c ffa-f
+C c4 >c8<a- <ff>f<f  g4 >g8e- dd>d<d crgf <ff>f<f
+
+A e-4 d8e- d4 <b4
+B c8fa-b   g2
+C a-4 f8>f< g4 b4
+
+;;;; (F)
+
+ABC t120
+A o3 q6 @2 v4
+B o3 q6 @2 v6
+C o1 q4
+
+AB @~0
+
+A [r1]2 >c4. <b4.> d8e-  f4. f8r fgf
+B @1 q4 [g8e-c gd<b >fr  a-fd a-fc <br>]2
+C >[c4. <g4. f8>f  d4. f4. g4]2
+
+A g4.r8 <b->cde-  f4.r8 gab-a
+B d8<b-g >gd<b- >fr  fd<a >afd fg
+C g4. d4. <b-8>b-  a4. d4. <f8>f
+
+A v+ g4.f8 d4.c8
+B b-2 a2
+C g8>d<b->d< a>d<f>d<
+
+A d2
+B g2
+C g2
+
+;;;; (C)
+
+ABC t120
+A o2 q3 @2 v7
+B o2 q3 @0 v6
+C o1 q4
+
+AB @~0
+
+A r1 r1 r1 r1 ;b-b-fb- e-b-g>d fd<af a>ce<a  >d4.r <b-r>de-  <g4.b- f4.a
+B g8gdg cge-b-  aada ea>ce<  b-4.r8 grb->c  e-4.g8 d4.f8
+C g4 >d8<b- cc>c<c  d4 a8f <aa>ec  <g4 g4 g8>g< g4  >e-2 d2 
+
+A d8d<b->d cge-g  cc<a>c e-4 c4  d4c8d g4 f4
+B <<b-8>dgb- e-2  <a8>dfa8^2  f4.d8 g4.b8
+C g4 >d8<b- cc>c<c  d4 a8f ccac  <f4>f8d <gg>db
+
+;;;; (B) Bridge again
+
+ABC t120
+;A o3 q6 @2 l8 v4
+;B o2 q6 @2 l8 v3
+C o1 q4 l8
+
+AB @~2
+
+A e-1
+B >c1
+C c2 q2 c4 c4
+
+A a1
+B f1
+C d4 d4 d4 d4
+
+A d2 f2
+B g2 d2
+C <b-4 b-4 q6 b4 b4
+
+A >c1
+B g1
+C >c1
+
+A <e-1
+B c1
+C q2 c4 c4 q6 c8>c< q2 c4
+
+A f1
+B d1
+C d4 d4 q6 d8>d< q2 d4
+
+A d2 f4 g4
+B g8ge-g bgd<b
+C q6 <b-4 b-8>f <b4 b8>f+
+
+A >c1
+B c1
+C g2 >c2
+
+;;;; (I) Final cadence.
+
+ABC t120
+A o3 q6 @2 v7
+B o2 q6 @2 v6
+C o1 q4
+
+AB @~1
+
+;A d2 f4 g4
+ABC t115
+A g8^2 b4.
+B g8ge-g bgd<b>
+C q6 <b-4 b-8>f <b4 b8>f+
+
+ABC t110
+A >c2. r8<g>
+B c4. e-4. g8r
+C g2 >c2
+
+ABC t100
+A g8^2 b4.
+B b-8b-gb- d4<b4
+C q6 <b-4 b-8>f <b4 b8>f+
+
+ABC t90
+A >c1
+B >c1
+C >c1
+
