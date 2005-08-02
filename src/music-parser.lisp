@@ -231,7 +231,7 @@
 	   ;; XXX genericize replay stuff
 	   (assert (set-tune-replay argument tune))
 	   (setf (tune-channels tune)
-		 (replay-create-channels (tune-replay tune))))
+		 (funcall (replay-channel-creator (tune-replay tune)))))
 	  ((TITLE COMPOSER COPYRIGHT)
 	   (push (list header argument) (tune-metadata tune))))))))
 
@@ -377,12 +377,11 @@ Highly intolerant of malformed inputs."
 	       (setf (channel-tempo c) tempo))))
 	  
 	  ;; Section change.
-	  ;; XXX: add something to complain about unfinished loops.
 	  ((char= next-char #\#)
 	   (read-char stream)
 	   (when in-loop-p
-	     (format t "WARNING: changing sections during a [] repeat.  ~
-                       This probably won't work."))
+	     (warn "Changing sections during a [] repeat.  ~
+                    This probably won't work."))
 	   (return))
 
 	  ;; Staccato.
@@ -409,8 +408,8 @@ Highly intolerant of malformed inputs."
 	  ((char= next-char #\%)
 	   (assert current-channels () "Command outside channels.")
 	   (read-char stream)
-	   (replay-special-handler (tune-replay tune) stream
-				   current-channels))
+	   (funcall (replay-special-handler (tune-replay tune))
+		    stream current-channels))
 
 	  ;; Comment.
 	  ((char= next-char #\;)
