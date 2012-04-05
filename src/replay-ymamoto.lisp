@@ -26,10 +26,7 @@ multiple loops."
        (values list 0)))
 
 (defun make-env-follow-command (options)
-  (let ((cmd (make-instance 'music-command)))
-    (setf (slot-value cmd 'type) :envelope-follow)
-    (setf (slot-value cmd 'value) options)
-    cmd))
+  (make-instance 'music-command :type :envelope-follow :value options))
 
 
 ;;;; INPUT-RELATED FUNCTIONS
@@ -50,17 +47,17 @@ multiple loops."
 		    (read-char stream)
 		    (dolist (c channels)
 		      (vector-push-extend (make-env-follow-command :octave)
-					  (channel-data-stream c))))
+					  (data-stream-of c))))
 		   ((char= next-char #\u)
 		    (read-char stream)
 		    (dolist (c channels)
 		      (vector-push-extend (make-env-follow-command :unison)
-					  (channel-data-stream c))))
+					  (data-stream-of c))))
 		   ((char= next-char #\0)
 		    (read-char stream)
 		    (dolist (c channels)
 		      (vector-push-extend (make-env-follow-command :disable)
-					  (channel-data-stream c))))
+					  (data-stream-of c))))
 		   (t (format t "~&Ignored bad env-follow: %e~A"
 			      next-char)))))
 	  ;; Something else?
@@ -84,24 +81,24 @@ multiple loops."
 
 (defun ymamoto-output-note (note channel stream)
   (let ((note-word 0)
-	(frames (duration-to-frames (note-duration note)
-				    (channel-tempo channel)
+	(frames (duration-to-frames (duration-of note)
+				    (tempo-of channel)
 				    *ymamoto-frequency*))
 	(staccato-frames 0))
 
-    (cond ((eql (note-tone note) :rest)
+    (cond ((eql (tone-of note) :rest)
 	   (setf (ldb (byte 7 0) note-word) 127))
-	  ((eql (note-tone note) :wait)
+	  ((eql (tone-of note) :wait)
 	   (setf (ldb (byte 7 0) note-word) 126))
 	  (t
-	   (when (/= (channel-staccato channel) 1)	   
+	   (when (/= (staccato-of channel) 1)	   
 	     (setf staccato-frames (- frames (* frames
-						(channel-staccato channel))))
+						(staccato-of channel))))
 	     (when (< (- frames staccato-frames) 1)
 	       (decf staccato-frames))
 	     (setf frames (- frames staccato-frames)))
 
-	   (setf (ldb (byte 7 0) note-word) (note-tone note))))
+	   (setf (ldb (byte 7 0) note-word) (tone-of note))))
 
     (ymamoto-output-note-helper note-word frames stream)
     (when (plusp staccato-frames)
@@ -123,36 +120,36 @@ multiple loops."
       (:note (ymamoto-output-note note channel stream))
       (:arpeggio
        (format stream "~&~8TDC.W $~X"
-	       (logior (ash #b11000001 8) (music-command-value note)))
+	       (logior (ash #b11000001 8) (value-of note)))
        (incf *total-bytes* 2))
       (:tempo
-       (setf (channel-tempo channel) (music-command-value note)))
+       (setf (tempo-of channel) (value-of note)))
       (:staccato
-       (setf (channel-staccato channel) (music-command-value note)))
+       (setf (staccato-of channel) (value-of note)))
       (:volume
-       (setf (channel-volume channel) (music-command-value note))
+       (setf (volume-of channel) (value-of note))
        (format stream "~&~8TDC.W $~X"
-	       (logior (ash #b11000011 8) (music-command-value note)))
+	       (logior (ash #b11000011 8) (value-of note)))
        (incf *total-bytes* 2))
       (:volume-envelope
        (format stream "~&~8TDC.W $~X"
-	       (logior (ash #b11000100 8) (music-command-value note)))
+	       (logior (ash #b11000100 8) (value-of note)))
        (incf *total-bytes* 2))
       (:vibrato
        (format stream "~&~8TDC.W $~X"
-	       (logior (ash #b11001011 8) (music-command-value note)))
+	       (logior (ash #b11001011 8) (value-of note)))
        (incf *total-bytes* 2))
       (:envelope-follow
        (format stream "~&~8TDC.W $~X"
 	       (logior (ash #b11001000 8)
-		       (ecase (music-command-value note)
+		       (ecase (value-of note)
 			 (:disable 0)
 			 (:unison 1)
 			 (:octave #b11)))))
       (t (format t "~&WARNING: YMamoto ignoring ~A."
 		 (music-command-type note))))
-    (when (and (channel-loop-point channel)
-	       (= (channel-loop-point channel)
+    (when (and (loop-point-of channel)
+	       (= (loop-point-of channel)
 		  channel-pos))
       (setf *loop-point* *total-bytes*)))
   (format t "~&frames: ~A, bytes: ~A" *total-frames* *total-bytes*))
@@ -217,23 +214,23 @@ song_header:
       ;; I bet the following could all be reduced to one big format
       ;; statement.  Yuck.
       (format stream "~&~8TALIGN 4~&track_~D:" track-num)
-      (do ((c (tune-channels tune) (cdr c))
+      (do ((c (channels-of tune) (cdr c))
 	   (ctr (char-code #\a) (1+ ctr)))
 	  ((null c))
 	(format stream "~&~8TDC.W channel_~A~A>>2"
 		track-num (code-char ctr)))
 
       ;; output channels themselves.
-      (do ((c (tune-channels tune) (cdr c))
+      (do ((c (channels-of tune) (cdr c))
 	   (ctr (char-code #\a) (1+ ctr)))
 	  ((null c))
-	(format t "~&note ~A" (channel-loop-point (car c)))
+	(format t "~&note ~A" (loop-point-of (car c)))
 	(format stream "~&~8TALIGN 4~&channel_~A~A:"
 		track-num (code-char ctr))
-	(ymamoto-output-note-stream (channel-data-stream (car c))
+	(ymamoto-output-note-stream (data-stream-of (car c))
 				    (car c)
 				    stream)
-	(if (channel-loop-point (car c))
+	(if (loop-point-of (car c))
 	    (format stream "~&~8TDC.W $8001, $~X" *loop-point*)
 	    (format stream "~&~8TDC.W $8000"))))))
 

@@ -8,15 +8,14 @@
 (defun duration-to-frames (duration tempo &optional (frequency 50))
   "Returns a /fractional/ duration -- the conversion routine is
 responsible for dealing with these fractions as it sees fit."
-  (let ((count (* (/ (* frequency +seconds-per-minute+)
-		     (/ tempo +beats-per-whole-note+))
-		  duration)))
-    count))
+  (* (/ (* frequency +seconds-per-minute+)
+	(/ tempo +beats-per-whole-note+))
+     duration))
 
 (defun clarify-duration (duration channel)
   (if duration
-      (setf (channel-default-duration channel) duration)
-      (channel-default-duration channel)))
+      (setf (default-duration-of channel) duration)
+      (default-duration-of channel)))
 
 (defun calculate-tone (char accidentals octave)
   (let ((tone-value (* +octave-size+ octave)))

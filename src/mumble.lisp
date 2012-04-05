@@ -22,9 +22,9 @@
 (defun set-tune-replay (name tune)
   (dolist (replay *replay-map*)
     (when (equal name (replay-name replay))
-      (setf (tune-replay tune) replay)
+      (setf (replay-of tune) replay)
       (return)))
-  (equal (replay-name (tune-replay tune)) name))
+  (equal (replay-name (replay-of tune)) name))
 
 ;;;; HIGH-LEVEL
 

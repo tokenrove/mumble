@@ -1,4 +1,4 @@
 
 (defpackage :mumble
-  (:use :cl :anaphora)
+  (:use :cl :anaphora :alexandria)
   (:export #:compile-mumble))

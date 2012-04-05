@@ -4,7 +4,7 @@
 (in-package #:mumble-system)
 
 (defsystem mumble
-    :depends-on (:anaphora)
+    :depends-on (:anaphora :alexandria)
     :components
     ((:module :src
 	      :components
