@@ -32,74 +32,51 @@
 (defparameter *default-octave* 4)
 (defparameter *default-staccato* 1)
 (defparameter *default-tempo* 120)
+(defvar *radix* 10)
 
 ;;;; LOW-LEVEL PARSE/LEX ROUTINES.
 
-(defun digit-to-int (char)
-  (- (char-code char) (char-code #\0)))
-
 (defun expect-int (stream)
-  ;; if the next character is a digit, read digits until the next
-  ;; character is not a digit.
-  (do ((next-char #1=(peek-char nil stream) #1#)
-       (int nil))
-      ((not (find next-char *duration-digits*)) int)
-    (let ((digit (digit-to-int (read-char stream))))
-      (if int
-	  (setf int (+ (* int 10) digit))
-	  (setf int digit)))))
+  (do ((i nil (let ((d (digit-char-p (read-char stream))))
+	       (if i (+ d (* i *radix*)) d))))
+      ((not (digit-char-p (peek-char nil stream nil #\a))) i)))
 
 (defun expect-duration (stream)
   (let ((duration (make-duration (expect-int stream)))
 	;; if the next character is a dot, read dots until the next
 	;; character is not a dot.
-	(dots (do ((next-char #1=(peek-char nil stream) #1#)
-		   (number-of-dots 0 (1+ number-of-dots)))
-		  ((char/= next-char #\.) number-of-dots)
-		(read-char stream))))
+	(dots (loop while (char= #\. (peek-char nil stream))
+		    sum 1
+		    do (read-char stream))))
 
     (when (and (plusp dots) (null duration))
       (error "Bad duration (relative dots are not allowed)."))
-    (do ((i 0 (1+ i))
-	 (orig duration (/ orig 2)))
-	((>= i dots))
-      (incf duration (/ orig 2)))
+    (setf duration (loop for i from 0 upto dots
+			 sum (/ duration (ash 1 i))))
 
     ;; tie.
-    (unless (null duration)
-      (do ((next-char #2=(peek-char nil stream) #2#))
-	  ((char/= next-char #\^))
-	(read-char stream)
-	(incf duration (make-duration (expect-int stream)))))
-
+    (when (and duration (char= #\^ (peek-char nil stream)))
+      (read-char stream)
+      (incf duration (expect-duration stream)))
     duration))
 
 (defun read-accidentals (stream)
-  (do ((next-char #1=(peek-char nil stream) #1#)
-       (accidentals 0))
-      ((char/= next-char #\+ #\-) accidentals)
-    (if (char= (read-char stream) #\+)
-	(incf accidentals)
-	(decf accidentals))))
+  (loop until (char/= (peek-char nil stream) #\+ #\-)
+	sum (if (char= (read-char stream) #\+) 1 -1)))
 
 (defun expect-note (stream)
   (let* ((note-char (read-char stream))
 	 (accidentals (read-accidentals stream))
 	 (duration (expect-duration stream)))
-
     ;; this function should always be called when we know there's a
     ;; note character next.
     (assert (find note-char *note-characters*))
-
     (values note-char accidentals duration)))
 
 (defun expect-rest (stream)
   (let ((rest-char (read-char stream))
 	(duration (expect-duration stream)))
-
-    (if (char= rest-char #\r)
-	(values :rest duration)
-	(values :wait duration))))
+    (values (if (char= rest-char #\r) :rest :wait) duration)))
 
 (defun expect-channels (stream)
   (do ((next-char #1=(peek-char nil stream) #1#)
