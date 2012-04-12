@@ -18,11 +18,7 @@ responsible for dealing with these fractions as it sees fit."
       (default-duration-of channel)))
 
 (defun calculate-tone (char accidentals octave)
-  (let ((tone-value (* +octave-size+ octave)))
-    (incf tone-value
-	  (do ((i 0 (1+ i)))
-	      ((char= char (schar *note-characters* i)) i)
-	    (assert (< i (length *note-characters*)))))
-    (incf tone-value accidentals)
-    tone-value))
+  (+ (* +octave-size+ octave)
+     (position char *note-characters*)
+     accidentals))
 

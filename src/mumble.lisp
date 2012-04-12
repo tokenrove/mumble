@@ -31,4 +31,4 @@
 (defun compile-mumble (in-file out-file)
   (with-open-file (stream in-file)
     (let ((tune (parse-mumble-file stream)))
-      (funcall (replay-output-fn (tune-replay tune)) tune out-file))))
+      (funcall (replay-output-fn (replay-of tune)) tune out-file))))

@@ -16,7 +16,7 @@
   `(progn
      ,@(loop for s in syms
 	     collect `(defun ,(symbolicate 'make- s '-command) (value)
-			(make-instance 'music-command :type ',s :value value)))))
+			(make-instance 'music-command :type ,(make-keyword s) :value value)))))
 
 (make-commands tempo staccato volume arpeggio volume-envelope vibrato)
 

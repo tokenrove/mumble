@@ -49,10 +49,11 @@
 		    sum 1
 		    do (read-char stream))))
 
-    (when (and (plusp dots) (null duration))
-      (error "Bad duration (relative dots are not allowed)."))
-    (setf duration (loop for i from 0 upto dots
-			 sum (/ duration (ash 1 i))))
+    (if duration
+        (incf duration (loop for i from 1 upto dots
+                             sum (/ duration (ash 1 i))))
+        (when (plusp dots)
+          (error "Bad duration (relative dots are not allowed).")))
 
     ;; tie.
     (when (and duration (char= #\^ (peek-char nil stream)))
@@ -82,14 +83,10 @@
   (do ((next-char #1=(peek-char nil stream) #1#)
        (channels))
       ((not (find next-char *channel-select-characters*)) channels)
-    ;; XXX dumb hack
-    (push (- (char-code (read-char stream))
-	     (char-code (char *channel-select-characters* 0)))
-	  channels)))
+    (push (position (read-char stream) *channel-select-characters*) channels)))
 
 (defun eat-whitespace (stream &optional (characters *whitespace-characters*))
-  (do ((next-char #1=(peek-char nil stream) #1#))
-      ((not (find next-char characters)))
+  (do () ((not (find (peek-char nil stream) characters)))
     (read-char stream)))
 
 (defun expect-= (stream)
