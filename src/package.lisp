@@ -1,4 +1,5 @@
 
 (defpackage :mumble
   (:use :cl :anaphora :alexandria)
-  (:export #:compile-mumble))
+  (:export #:compile-mumble
+           #:register-replay))
