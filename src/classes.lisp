@@ -60,10 +60,13 @@ the current channel tempo."))
 
 
 (defclass tune ()
-  ((channels :accessor channels-of)
+  ((tracks :accessor tracks-of :initform nil)
    (replay :accessor replay-of)
    (tables :accessor tables-of :initform nil)
    (metadata :accessor metadata-of :initform nil)))
+
+(defun channels-of-current-track-of (tune)
+  (first (tracks-of tune)))
 
 (defun make-tune () (make-instance 'tune))
 

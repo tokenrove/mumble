@@ -162,8 +162,7 @@ multiple loops."
 song_header:
         DC.W arpeggio_table>>2
         DC.W venv_table>>2
-        DC.W vibrato_table>>2
-	DC.B 0,1		; pad, number of tracks"))
+        DC.W vibrato_table>>2"))
 
 
 (defun ymamoto-output-length-loop-list-table (stream name table)
@@ -201,38 +200,41 @@ song_header:
 		   :if-exists :supersede)
     ;; simple header
     (output-ymamoto-header stream)
-    ;; for n tracks
-    (let ((track-num 1))
-      (format stream "~&~8TDC.W track_~D>>2" track-num))
+    (let ((n (length (tracks-of tune))))
+      (format stream "~&~8TDC.B 0,~D		; pad, number of tracks"
+              n)
+      (dotimes (i n) (format stream "~&~8TDC.W track_~D>>2" (1+ i))))
     (ymamoto-output-length-loop-list-table
      stream "arpeggio_table" (tune-get-table tune :arpeggio))
     (ymamoto-output-length-loop-list-table
      stream "venv_table" (tune-get-table tune :volume-envelope))
     (ymamoto-output-vibrato-table stream (tune-get-table tune :vibrato))
     ;; for n tracks
-    (let ((track-num 1))
-      ;; I bet the following could all be reduced to one big format
-      ;; statement.  Yuck.
-      (format stream "~&~8TALIGN 4~&track_~D:" track-num)
-      (do ((c (channels-of tune) (cdr c))
-	   (ctr (char-code #\a) (1+ ctr)))
-	  ((null c))
-	(format stream "~&~8TDC.W channel_~A~A>>2"
-		track-num (code-char ctr)))
+    (let ((track-num 0))
+      (dolist (track-channels (tracks-of tune))
+        ;; I bet the following could all be reduced to one big format
+        ;; statement.  Yuck.
+        (incf track-num)                ; starts at 1
+        (format stream "~&~8TALIGN 4~&track_~D:" track-num)
+        (do ((c track-channels (cdr c))
+             (ctr (char-code #\a) (1+ ctr)))
+            ((null c))
+          (format stream "~&~8TDC.W channel_~A~A>>2"
+                  track-num (code-char ctr)))
 
-      ;; output channels themselves.
-      (do ((c (channels-of tune) (cdr c))
-	   (ctr (char-code #\a) (1+ ctr)))
-	  ((null c))
-	(format t "~&note ~A" (loop-point-of (car c)))
-	(format stream "~&~8TALIGN 4~&channel_~A~A:"
-		track-num (code-char ctr))
-	(ymamoto-output-note-stream (data-stream-of (car c))
-				    (car c)
-				    stream)
-	(if (loop-point-of (car c))
-	    (format stream "~&~8TDC.W $8001, $~X" *loop-point*)
-	    (format stream "~&~8TDC.W $8000"))))))
+        ;; output channels themselves.
+        (do ((c track-channels (cdr c))
+             (ctr (char-code #\a) (1+ ctr)))
+            ((null c))
+          (format t "~&note ~A" (loop-point-of (car c)))
+          (format stream "~&~8TALIGN 4~&channel_~A~A:"
+                  track-num (code-char ctr))
+          (ymamoto-output-note-stream (data-stream-of (car c))
+                                      (car c)
+                                      stream)
+          (if (loop-point-of (car c))
+              (format stream "~&~8TDC.W $8001, $~X" *loop-point*)
+              (format stream "~&~8TDC.W $8000")))))))
 
 (register-replay "YMamoto"
 		 #'ymamoto-special-handler

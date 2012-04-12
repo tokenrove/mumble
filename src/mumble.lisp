@@ -28,7 +28,9 @@
 
 ;;;; HIGH-LEVEL
 
-(defun compile-mumble (in-file out-file)
-  (with-open-file (stream in-file)
-    (let ((tune (parse-mumble-file stream)))
-      (funcall (replay-output-fn (replay-of tune)) tune out-file))))
+(defun compile-mumble (out-file &rest in-files)
+  (let ((tune (make-tune)))
+    (dolist (f in-files)
+      (with-open-file (stream f)
+        (setf tune (parse-mumble-file stream tune))))
+    (funcall (replay-output-fn (replay-of tune)) tune out-file)))

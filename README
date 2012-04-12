@@ -41,7 +41,7 @@ USING MUMBLE FROM THE LISP REPL
 
 You should be able to just:
 > (asdf:oos 'asdf:load-op 'mumble)
-> (mumble:compile-mumble "my-file.mbl" "my-file.out-ext")
+> (mumble:compile-mumble "my-file.out-ext" "tune-1.in" "tune-2.in")
 and everything should work.
 
 
