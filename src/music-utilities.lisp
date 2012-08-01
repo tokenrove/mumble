@@ -11,14 +11,3 @@ responsible for dealing with these fractions as it sees fit."
   (* (/ (* frequency +seconds-per-minute+)
 	(/ tempo +beats-per-whole-note+))
      duration))
-
-(defun clarify-duration (duration channel)
-  (if duration
-      (setf (default-duration-of channel) duration)
-      (default-duration-of channel)))
-
-(defun calculate-tone (char accidentals octave)
-  (+ (* +octave-size+ octave)
-     (position char *note-characters*)
-     accidentals))
-

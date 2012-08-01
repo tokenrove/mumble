@@ -95,19 +95,15 @@ multiple loops."
 				    *frequency*))
 	(staccato-frames 0))
 
-    (cond ((eql (tone-of note) :rest)
-	   (setf (ldb (byte 7 0) note-word) 127))
-	  ((eql (tone-of note) :wait)
-	   (setf (ldb (byte 7 0) note-word) 126))
-	  (t
-	   (when (/= (staccato-of channel) 1)	   
-	     (setf staccato-frames (- frames (* frames
-						(staccato-of channel))))
-	     (when (< (- frames staccato-frames) 1)
-	       (decf staccato-frames))
-	     (setf frames (- frames staccato-frames)))
-
-	   (setf (ldb (byte 7 0) note-word) (tone-of note))))
+    (acond ((find (tone-of note) #(:rest :wait))
+            (setf (ldb (byte 7 0) note-word) (if (eql it :rest) 127 126)))
+      (t
+       (when (/= (staccato-of channel) 1)
+         (setf staccato-frames (- frames (* frames (staccato-of channel))))
+         (when (< (- frames staccato-frames) 1)
+           (decf staccato-frames))
+         (setf frames (- frames staccato-frames)))
+       (setf (ldb (byte 7 0) note-word) (tone-of note))))
 
     (output-note-helper note-word frames stream)
     (when (plusp staccato-frames)
@@ -164,13 +160,13 @@ multiple loops."
 
 (defun output-vibrato-table (stream table)
   ;; note that the zeroth element of the table is skipped.
-  (emit-byte (max 0 (1- (length table))) stream)
-  (do ((i 1 (1+ i)))
-      ((>= i (length table)))
-    (let* ((list (aref table i))
-           (speed (getf list 'mumble::SPEED)))
-	(mapc (lambda (b) (emit-byte b stream))
-              (list 3 (getf list 'mumble::DELAY) (getf list 'mumble::DEPTH) (- 5 speed) (ash 1 (- 5 speed))))))
+  (let ((n (length table)))
+    (emit-byte (max 0 (1- n)) stream)
+    (loop for i from 1 below n
+          do (let* ((list (aref table i))
+                    (speed (getf list 'mumble::SPEED)))
+               (mapc (lambda (b) (emit-byte b stream))
+                     (list 3 (getf list 'mumble::DELAY) (getf list 'mumble::DEPTH) (- 5 speed) (ash 1 (- 5 speed)))))))
   (ensure-alignment stream *table-alignment*))
 
 (defun output-length-loop-list-table (stream table)
@@ -187,8 +183,7 @@ multiple loops."
 (defun output-bin (tune out-file)
   (macrolet ((aggregate (&body body)
                `(let ((s (make-array 0 :element-type 'unsigned-byte :adjustable t :fill-pointer 0)))
-                  (prog1 s
-                    ,@body))))
+                  (prog1 s ,@body))))
     ;; create bytes of all tables (incl. alignment bytes)
     (let ((vibratos (aggregate (output-vibrato-table s (tune-get-table tune :vibrato))))
           (arps (aggregate (output-length-loop-list-table s (tune-get-table tune :arpeggio))))
@@ -211,19 +206,15 @@ multiple loops."
                    (write-16u-be (ash -> -2) stream)
                    (incf -> (if (numberp object) object (length object)))))
             ;; write header
-            (pointer-to arps)
-            (pointer-to venvs)
-            (pointer-to vibratos)
+            (mapc #'pointer-to (list arps venvs vibratos))
             (write-byte 0 stream)           ; padding
             (write-byte n-tracks stream)
             (let ((track->s (mapcar (lambda (track) (pointer-to (+ (* 2 (length track))
                                                             (reduce #'+ track :key #'length)))) tracks)))
-              (write-sequence arps stream)
-              (write-sequence venvs stream)
-              (write-sequence vibratos stream)
+              (mapc (lambda (x) (write-sequence x stream)) (list arps venvs vibratos))
               (mapc (lambda (track track->)
                       (setf -> track->)
-                      (mapc (lambda (channel) (pointer-to channel)) track)
+                      (mapc #'pointer-to track)
                       (mapc (lambda (channel) (write-sequence channel stream)) track))
                     tracks track->s))))))))
 

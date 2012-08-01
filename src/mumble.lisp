@@ -20,10 +20,7 @@
 	 (push replay *replay-map*))))
 
 (defun set-tune-replay (name tune)
-  (dolist (replay *replay-map*)
-    (when (equal name (replay-name replay))
-      (setf (replay-of tune) replay)
-      (return)))
+  (setf (replay-of tune) (find name *replay-map* :key #'replay-name :test #'equal))
   (equal (replay-name (replay-of tune)) name))
 
 ;;;; HIGH-LEVEL

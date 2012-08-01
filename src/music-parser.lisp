@@ -25,14 +25,9 @@
 (defparameter *whitespace-characters* #(#\Space #\Newline #\Tab))
 (defparameter *ws-and-barline-characters* #(#\Space #\Newline #\Tab #\|))
 
-(defconstant +octave-size+ 12)
-
 (defparameter *staccato-base-division* 1/8)
-(defparameter *default-duration* (make-duration 4))
-(defparameter *default-octave* 4)
-(defparameter *default-staccato* 1)
-(defparameter *default-tempo* 120)
 (defvar *radix* 10)
+(defconstant +octave-size+ 12)
 
 ;;;; LOW-LEVEL PARSE/LEX ROUTINES.
 
@@ -42,18 +37,15 @@
       ((not (digit-char-p (peek-char nil stream nil #\a))) i)))
 
 (defun expect-duration (stream)
-  (let ((duration (make-duration (expect-natural stream)))
-	;; if the next character is a dot, read dots until the next
-	;; character is not a dot.
-	(dots (loop while (char= #\. (peek-char nil stream))
-		    sum 1
-		    do (read-char stream))))
+  (let* ((duration (make-duration (expect-natural stream)))
+         ;; if the next character is a dot, read dots until the next
+         ;; character is not a dot.
+         (dots (loop while (char= #\. (peek-char nil stream))
+                     for i from 1
+                     sum (/ duration (ash 1 i))
+                     do (read-char stream))))
 
-    (if duration
-        (incf duration (loop for i from 1 upto dots
-                             sum (/ duration (ash 1 i))))
-        (when (plusp dots)
-          (error "Bad duration (relative dots are not allowed).")))
+    (when duration (incf duration dots))
 
     ;; tie.
     (when (and duration (char= #\^ (peek-char nil stream)))
@@ -97,28 +89,19 @@
 (defun read-numbers-and-loop-macro (stream)
   (assert (char= (read-char stream) #\{))
   (eat-whitespace stream)
-  (do ((next-char #1=(peek-char nil stream) #1#)
-       list)
-      ((char= next-char #\}) (progn (read-char stream)
-				    (reverse list)))
-    (cond ((char= next-char #\|)
-	   (read-char stream)
-	   (push :loop list))
-	  ((find next-char "0123456789-")
-	   (push (read stream) list))
-	  (t
-	   (read-char stream)
-	   (format t "~&Warning: ignored ~A in macro definition."
-		   next-char)))
-    (eat-whitespace stream)))
+  (loop for next-char = (peek-char nil stream)
+        until (char= next-char #\})
+        collect (cond ((char= next-char #\|)
+                       (read-char stream)
+                       :loop)
+                      ((find next-char "0123456789-") (read stream)))
+        do (eat-whitespace stream)))
 
 (defun read-symbols-macro (stream)
   (assert (char= (read-char stream) #\{))
-  (eat-whitespace stream)
-  (do ((symbol (read stream) (read stream))
-       list)
-      ((eql symbol '}) (reverse list))
-    (push symbol list)))
+  (loop for symbol = (read stream)
+        until (eql symbol '})
+        collect symbol))
 
 (defparameter *macro-table-mapping*
   '((#\a :arpeggio read-numbers-and-loop-macro)
@@ -127,40 +110,34 @@
     (#\~ :vibrato read-symbols-macro)))
 
 (defun read-macro-definition (stream)
-  (assert (char= (read-char stream) #\@))
   (let* ((dispatch (read-char stream))
 	 (index (expect-natural stream))
-	 (mapping (find dispatch *macro-table-mapping* :test #'equal
-			:key #'first)))
+	 (mapping (find dispatch *macro-table-mapping* :test #'equal :key #'first)))
     (expect-= stream)
     (values (second mapping) index (funcall (third mapping) stream))))
 
 
 (defun handle-simple-volume (stream channels)
   (assert (char= (read-char stream) #\v))
-  (let ((next-char (peek-char nil stream)))
-    (cond ((find next-char *duration-digits*)
-	   (let ((volume (expect-natural stream)))
-	     (dolist (c channels)
-	       (vector-push-extend
-		(make-volume-command volume)
-		(data-stream-of c))
-	       (setf (volume-of c) volume))))
-	  ((char= next-char #\+)
-	   (read-char stream)
-	   (dolist (c channels)
-	     (vector-push-extend
-	      (make-volume-command (1+ (volume-of c)))
-	      (data-stream-of c))))
-	  ((char= next-char #\-)
-	   (read-char stream)
-	   (dolist (c channels)
-	     (vector-push-extend
-	      (make-volume-command (1- (volume-of c)))
-	      (data-stream-of c))))
-	  (t (error "~&Bad volume character: v~A" next-char)))))
+  (let ((fn (ecase (peek-char nil stream)
+              ((#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)
+               (constantly (expect-natural stream)))
+              (#\+ (read-char stream) #'1+)
+              (#\- (read-char stream) #'1-))))
+    (dolist (c channels)
+      (let ((v (funcall fn (volume-of c))))
+        (vector-push-extend (make-volume-command v) (data-stream-of c))
+        (setf (volume-of c) v)))))
 
+(defun clarify-duration (duration channel)
+  (if duration
+      (setf (default-duration-of channel) duration)
+      (default-duration-of channel)))
 
+(defun calculate-tone (char accidentals octave)
+  (+ (* +octave-size+ octave)
+     (position char *note-characters*)
+     accidentals))
 
 ;;;; HIGH-LEVEL PARSE ROUTINES.
 
@@ -211,48 +188,25 @@
 
 (defun parse-macro-section (stream tune)
   (eat-whitespace stream)
-  (do ((next-char #1=(peek-char nil stream) #1#))
-      (nil)
-    (cond ((char= next-char #\@)
-	   (multiple-value-bind (table index entry)
-	       (read-macro-definition stream)
-	     (assert (plusp index) ()
-		     "Bad index ~A (tables index from 1 -- 0 is the ~
+  (loop for next-char = (read-char stream)
+        do (cond ((char= next-char #\@)
+                  (multiple-value-bind (table index entry)
+                      (read-macro-definition stream)
+                    (assert (plusp index) ()
+                            "Bad index ~A (tables index from 1 -- 0 is the ~
                      \"effect off\" index)." index)
-	     (unless (tune-get-table tune table)
-	       (tune-add-table tune table))
-	     (tune-add-to-table tune table index entry)))
+                    (unless (tune-get-table tune table)
+                      (tune-add-table tune table))
+                    (tune-add-to-table tune table index entry)))
 
-	  ;; Section change.
-	  ((char= next-char #\#)
-	   (read-char stream)
-	   (return))
-
-	  ;; Comment.
-	  ((char= next-char #\;)
-	   (read-line stream))
-
-	  ;; Something else?
-	  (t (format t "~&Ignored character in macro section: ~A (~:*~S)"
-		     (read-char stream))))
-    (eat-whitespace stream)))
-
-;; possible ``dispatch table'' format for routine below?
-#+nil '((#\o
-   ((octave (progn (read-char stream) (expect-natural stream))))
-   (setf (octave-of channel) octave))
-  (#\<
-   nil
-   (decf (octave-of c)))
-  (*note-characters*
-   ((note-char accidentals duration) (expect-note stream))
-   (push (make-note (calculate-tone note-char
-				    accidentals
-				    (octave-of channel))
-		    (clarify-duration duration channel))
-    (data-stream-of channel))))
-
-  
+                 ;; Section change.
+                 ((char= next-char #\#) (return))
+                 ;; Comment.
+                 ((char= next-char #\;) (read-line stream))
+                 ;; Something else?
+                 (t (format t "~&Ignored character in macro section: ~A (~:*~S)"
+                            next-char)))
+           (eat-whitespace stream)))
 
 (defun parse-music-section (stream tune
 			    &optional loop-channels in-loop-p)
@@ -263,7 +217,7 @@ Highly intolerant of malformed inputs."
   (do ((current-channels (and in-loop-p loop-channels))
        (next-char #1=(peek-char nil stream) #1#))
       (nil)
-          ;; Channel selection characters.
+    ;; Channel selection characters.
     (cond ((find next-char *channel-select-characters*)
 	   (setf current-channels nil)
 	   (dolist (c (expect-channels stream))
@@ -273,16 +227,13 @@ Highly intolerant of malformed inputs."
 
 	  ;; Repeats (unrolled loops).
 	  ((char= next-char #\[)
-	   (assert current-channels () "Command outside channels.")
 	   (read-char stream)
 	   (dolist (c current-channels)
-	     (push (channel-current-position c)
-		   (repeats-of c)))
+	     (push (channel-current-position c) (repeats-of c)))
 	   (parse-music-section stream tune current-channels t))
 
 	  ((char= next-char #\])
-	   (assert (and in-loop-p
-			current-channels))
+	   (assert (and in-loop-p current-channels))
 	   (read-char stream)
 	   (let ((count (expect-natural stream)))
 	     (dolist (c current-channels)
@@ -293,33 +244,19 @@ Highly intolerant of malformed inputs."
 	   (return))
 
 	  ;; Octave changes.
-	  ((char= next-char #\o)
-	   (assert current-channels () "Command outside channels.")
+	  ((find next-char #(#\o #\< #\>))
 	   (read-char stream)
-	   (let ((octave (expect-natural stream)))
+	   (let ((f (ecase next-char
+                      (#\o (constantly (expect-natural stream)))
+                      (#\< #'1-) (#\> #'1+))))
 	     (dolist (c current-channels)
-	       (setf (octave-of c) octave))))
-
-	  ((char= next-char #\<)
-	   (assert current-channels () "Command outside channels.")
-	   (read-char stream)
-	   (dolist (c current-channels)
-	     (decf (octave-of c))))
-
-	  ((char= next-char #\>)
-	   (assert current-channels () "Command outside channels.")
-	   (read-char stream)
-	   (dolist (c current-channels)
-	     (incf (octave-of c))))
+	       (setf (octave-of c) (funcall f (octave-of c))))))
 
 	  ;; (Non-venv) volume changes.
-	  ((char= next-char #\v)
-	   (assert current-channels () "Command outside channels.")
-	   (handle-simple-volume stream current-channels))
+	  ((char= next-char #\v) (handle-simple-volume stream current-channels))
 
 	  ;; Notes and rests.
 	  ((find next-char *note-characters*)
-	   (assert current-channels () "Command outside channels.")
 	   (multiple-value-bind (note-char accidentals duration)
 	       (expect-note stream)
 	     (dolist (c current-channels)
@@ -331,62 +268,45 @@ Highly intolerant of malformed inputs."
 				   (data-stream-of c)))))
 
 	  ((or (char= next-char #\r) (char= next-char #\w))
-	   (assert current-channels () "Command outside channels.")
-	   (multiple-value-bind (note-type duration)
-	       (expect-rest stream)
+	   (multiple-value-bind (note-type duration) (expect-rest stream)
 	     (dolist (c current-channels)
-	       (vector-push-extend (make-note note-type
-					      (clarify-duration duration c))
+	       (vector-push-extend (make-note note-type (clarify-duration duration c))
 				   (data-stream-of c)))))
 
-	  ;; Tempo change.
-	  ((char= next-char #\t)
-	   (assert current-channels () "Command outside channels.")
+	  ;; Tempo or staccato change.
+	  ((find next-char #(#\t #\q))
 	   (read-char stream)
-	   (let ((tempo (expect-natural stream)))
+	   (let* ((value (expect-natural stream))
+                  (command (make-instance 'music-command :type (case next-char (#\t :tempo) (#\q :staccato)) :value value)))
 	     (dolist (c current-channels)
-	       (vector-push-extend (make-tempo-command tempo)
-				   (data-stream-of c))
-	       (setf (tempo-of c) tempo))))
-	  
+	       (vector-push-extend command (data-stream-of c))
+	       (ecase next-char
+                 (#\t (setf (tempo-of c) value))
+                 (#\q (setf (staccato-of c) value))))))
+
 	  ;; Section change.
 	  ((char= next-char #\#)
 	   (read-char stream)
 	   (when in-loop-p
-	     (warn "Changing sections during a [] repeat.  ~
-                    This probably won't work."))
+	     (warn "Changing sections during a [] repeat."))
 	   (return))
-
-	  ;; Staccato.
-	  ((char= next-char #\q)
-	   (assert current-channels () "Command outside channels.")
-	   (read-char stream)
-	   (let ((staccato (* *staccato-base-division* (expect-natural stream))))
-	     (dolist (c current-channels)
-	       (vector-push-extend (make-staccato-command staccato)
-				   (data-stream-of c))
-	       (setf (staccato-of c) staccato))))
 
 	  ;; Macro invocation.
 	  ((char= next-char #\@)
-	   (assert current-channels () "Command outside channels.")
 	   (parse-macro-invocation stream current-channels))
 
 	  ;; Structural dispatch character.
 	  ((char= next-char #\!)
-	   (assert current-channels () "Command outside channels.")
 	   (parse-bang-invocation stream current-channels))
 
 	  ;; Replay-special invocation.
 	  ((char= next-char #\%)
-	   (assert current-channels () "Command outside channels.")
 	   (read-char stream)
 	   (funcall (replay-special-handler (replay-of tune))
 		    stream current-channels))
 
 	  ;; Comment.
-	  ((char= next-char #\;)
-	   (read-line stream))
+	  ((char= next-char #\;) (read-line stream))
 
 	  ;; Something else?
 	  (t (format t "~&Ignored character in music section: ~A (~:*~S)"
@@ -394,37 +314,14 @@ Highly intolerant of malformed inputs."
     (eat-whitespace stream *ws-and-barline-characters*)))
 
 
-;;; XXX: should use *macro-table-mapping*
 (defun parse-macro-invocation (stream channels)
   (read-char stream)
-  (let ((next-char (peek-char nil stream)))
-          ;; Arpeggio.
-    (cond ((char= next-char #\a)
-	   (read-char stream)
-	   (let ((arp-num (expect-natural stream)))
-	     (dolist (c channels)
-	       (vector-push-extend (make-arpeggio-command arp-num)
-				   (data-stream-of c)))))
-	  ;; Volume envelope.
-	  ((char= next-char #\v)
-	   (read-char stream)
-	   (let ((venv-num (expect-natural stream)))
-	     (dolist (c channels)
-	       (vector-push-extend (make-volume-envelope-command venv-num)
-				   (data-stream-of c)))))
-
-	  ;; Vibrato.
-	  ((char= next-char #\~)
-	   (read-char stream)
-	   (let ((vibrato-num (expect-natural stream)))
-	     (dolist (c channels)
-	       (vector-push-extend (make-vibrato-command vibrato-num)
-				   (data-stream-of c)))))
-
-	  ;; Something else?
-	  (t (format t "~&Ignored macro invocator: @~A (~:*~S)"
-		     (read-char stream))))))
-
+  (let* ((next-char (read-char stream))
+         (n (expect-natural stream))
+         (type (second (find next-char *macro-table-mapping* :test #'equal :key #'first))))
+    (dolist (c channels)
+      (vector-push-extend (make-instance 'music-command :value n :type type)
+                          (data-stream-of c)))))
 
 (defun parse-bang-invocation (stream channels)
   (assert (char= (read-char stream) #\!))
