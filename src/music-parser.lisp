@@ -95,7 +95,8 @@
                        (read-char stream)
                        :loop)
                       ((find next-char "0123456789-") (read stream)))
-        do (eat-whitespace stream)))
+        do (eat-whitespace stream)
+        finally (assert (char= #\} (read-char stream)))))
 
 (defun read-symbols-macro (stream)
   (assert (char= (read-char stream) #\{))
