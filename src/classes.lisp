@@ -15,8 +15,8 @@
 (defmacro make-commands (&rest syms)
   `(progn
      ,@(loop for s in syms
-	     collect `(defun ,(symbolicate 'make- s '-command) (value)
-			(make-instance 'music-command :type ,(make-keyword s) :value value)))))
+             collect `(defun ,(symbolicate 'make- s '-command) (value)
+                        (make-instance 'music-command :type ,(make-keyword s) :value value)))))
 
 (make-commands tempo staccato volume arpeggio volume-envelope vibrato)
 
@@ -58,7 +58,7 @@ the current channel tempo."))
 (defun copy-and-append-channel-data (channel begin end)
   (loop for x from begin to end
        do (vector-push-extend (aref (data-stream-of channel) x)
-			      (data-stream-of channel))))
+                              (data-stream-of channel))))
 
 
 (defclass tune ()
@@ -80,16 +80,16 @@ the current channel tempo."))
 
 (defun tune-add-table (tune table-sym)
   (push (cons table-sym (make-array '(0) :initial-element nil
-				    :adjustable t))
-	(tables-of tune)))
+                                    :adjustable t))
+        (tables-of tune)))
 
 (defun tune-add-to-table (tune table-sym index entry)
   (let ((table (tune-get-table tune table-sym)))
     (when (>= index (length table))
       (setf table (adjust-array table (list (1+ index))
-				:initial-element nil)))
+                                :initial-element nil)))
     (when (aref table index)
       (format t "~&WARNING: ~A entry ~A already exists; replacing."
-	      table-sym index))
+              table-sym index))
     (setf (aref table index) entry)
     (setf (tune-get-table tune table-sym) table)))

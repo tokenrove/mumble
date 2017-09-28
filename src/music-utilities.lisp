@@ -9,5 +9,5 @@
   "Returns a /fractional/ duration -- the conversion routine is
 responsible for dealing with these fractions as it sees fit."
   (* (/ (* frequency +seconds-per-minute+)
-	(/ tempo +beats-per-whole-note+))
+        (/ tempo +beats-per-whole-note+))
      duration))

@@ -63,15 +63,15 @@ multiple loops."
 (defun special-handler (stream channels)
   (let ((special-char (read-char stream)))
     (cond ((char= special-char #\e)
-	   ;; env follow
-	   (let ((next-char (peek-char nil stream)))
+           ;; env follow
+           (let ((next-char (peek-char nil stream)))
              (let ((kind (ecase next-char (#\o :octave) (#\u :unison) (#\0 :disable))))
                (read-char stream)
                (dolist (c channels)
                  (vector-push-extend (make-env-follow-command kind)
                                      (data-stream-of c))))))
-	  ;; Something else?
-	  (t (format t "~&Ignored special invocator: %~A" special-char)))))
+          ;; Something else?
+          (t (format t "~&Ignored special invocator: %~A" special-char)))))
 
 
 ;;;; OUTPUT FUNCTIONS
@@ -90,10 +90,10 @@ multiple loops."
 
 (defun output-note (note channel stream)
   (let ((note-word 0)
-	(frames (duration-to-frames (duration-of note)
-				    (tempo-of channel)
-				    *frequency*))
-	(staccato-frames 0))
+        (frames (duration-to-frames (duration-of note)
+                                    (tempo-of channel)
+                                    *frequency*))
+        (staccato-frames 0))
 
     (acond ((find (tone-of note) #(:rest :wait))
             (setf (ldb (byte 7 0) note-word) (if (eql it :rest) 127 126)))
@@ -114,11 +114,11 @@ multiple loops."
   "Traverse a note-stream, keeping track of tempo and staccato
   settings, and output assembly directives for this note stream."
   (setf *channel-delta* 0
-	*total-frames* 0
-	*total-bytes* 0)
+        *total-frames* 0
+        *total-bytes* 0)
   (do* ((note-> 0 (1+ note->))
-	note
-	(channel-pos 0 (1+ channel-pos)))
+        note
+        (channel-pos 0 (1+ channel-pos)))
        ((>= note-> (length notes)))
     (setf note (aref notes note->))
     (case (music-command-type note)
@@ -148,10 +148,10 @@ multiple loops."
                                (:octave  #b11)))
                      stream))
       (t (format t "~&WARNING: YMamoto ignoring ~A."
-		 (music-command-type note))))
+                 (music-command-type note))))
     (when (and (loop-point-of channel)
-	       (= (loop-point-of channel)
-		  channel-pos))
+               (= (loop-point-of channel)
+                  channel-pos))
       (setf *loop-point* *total-bytes*)))
   (format t "~&frames: ~A, bytes: ~A" *total-frames* *total-bytes*))
 

@@ -13,11 +13,11 @@
 
 (defun register-replay (name special-handler channel-creator output-fn)
   (let ((replay (make-replay :name name :special-handler special-handler
-			     :channel-creator channel-creator
-			     :output-fn output-fn)))
+                             :channel-creator channel-creator
+                             :output-fn output-fn)))
     (aif (position name *replay-map* :test #'equal :key #'replay-name)
-	 (setf (nth it *replay-map*) replay)
-	 (push replay *replay-map*))))
+         (setf (nth it *replay-map*) replay)
+         (push replay *replay-map*))))
 
 (defun set-tune-replay (name tune)
   (setf (replay-of tune) (find name *replay-map* :key #'replay-name :test #'equal))
