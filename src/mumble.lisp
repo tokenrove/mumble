@@ -31,3 +31,7 @@
       (with-open-file (stream f)
         (setf tune (parse-mumble-file stream tune))))
     (funcall (replay-output-fn (replay-of tune)) tune out-file)))
+
+(defun main (argv)
+  #+sbcl (sb-ext:disable-debugger)
+  (apply #'compile-mumble (cdr argv)))
