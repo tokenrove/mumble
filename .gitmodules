@@ -1,0 +1,6 @@
+[submodule "vendor/anaphora"]
+	path = vendor/anaphora
+	url = https://github.com/tokenrove/anaphora.git
+[submodule "vendor/alexandria"]
+	path = vendor/alexandria
+	url = https://gitlab.common-lisp.net/alexandria/alexandria
